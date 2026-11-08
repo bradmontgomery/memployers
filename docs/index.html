@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MEMployers 2026 — Greater Memphis IT Employers &amp; Skills Intelligence Hub</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <!-- SQLite WebAssembly (sql.js) for 100% client-side in-browser SQL execution on GitHub Pages -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <!-- Header & Navigation -->
+  <header class="app-header">
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-logo">M</div>
+        <div>
+          <div class="brand-title">
+            MEMployers 2026
+            <span class="badge-live" id="wasm-engine-badge">⚡ SQLite 3 WASM</span>
+          </div>
+          <div class="brand-subtitle">
+            Greater Memphis Area IT Employers, Skills Taxonomy, Compensation &amp; Corridor Intelligence
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="global-search-wrap">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            id="global-search-input"
+            class="global-search-input"
+            placeholder="Quick search skills, employers, roles (e.g. Kubernetes, xAI, Epic, Rust)..."
+          />
+        </div>
+        <a href="./memphis_it_jobs_2026.db" download="memphis_it_jobs_2026.db" class="btn" title="Download the raw SQLite 3 database file">
+          ⬇ .db
+        </a>
+        <button id="theme-toggle-btn" class="btn" title="Toggle Dark / Light Mode">
+          <span id="theme-icon">☀️ Light</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs-bar" id="main-nav-tabs">
+      <button class="nav-tab active" data-tab="tab-skills">
+        🎯 Skills ↔ Employers Hub <span class="tab-count" id="nav-count-skills">37</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-market">
+        📊 Market Visualizations &amp; Pay
+      </button>
+      <button class="nav-tab" data-tab="tab-corridors">
+        🗺️ Memphis Corridors &amp; Rules <span class="tab-count">9</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-companies">
+        🏢 Employer Directory <span class="tab-count" id="nav-count-companies">86</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-jobs">
+        💼 Verified IT Jobs <span class="tab-count" id="nav-count-jobs">118</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-sql">
+        🔬 SQLite WASM Workbench <span class="tab-count">12</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="main-container">
+    <!-- Global KPI Ribbon -->
+    <section class="kpi-ribbon" id="kpi-ribbon"></section>
+
+    <!-- ================================================================== -->
+    <!-- TAB 1: SKILLS <-> EMPLOYERS HUB (PRIMARY CANDIDATE GOAL)            -->
+    <!-- ================================================================== -->
+    <div id="tab-skills" class="tab-pane active">
+      <!-- Candidate Skill Matcher & Pathfinder -->
+      <div class="panel-card" style="margin-bottom: 20px;">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              🎯 Candidate "My Skills" Matcher &amp; Employer Pathfinder
+            </div>
+            <div class="panel-subtitle">
+              Select the skills in your toolkit (or choose a candidate persona / paste resume keywords) to see which Memphis companies are hiring for your stack, matched job postings, and high-ROI upskill recommendations.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:11.5px;color:var(--text-muted);font-weight:600;">Quick Personas:</span>
+            <button class="btn btn-sm persona-btn" data-skills="java_spring,react_nextjs,sql_databases,apis_microservices,cloud_gcp">Full-Stack Java/React</button>
+            <button class="btn btn-sm persona-btn" data-skills="csharp_dotnet,angular,sql_databases,cloud_azure,kubernetes_containers">.NET / Azure / Angular</button>
+            <button class="btn btn-sm persona-btn" data-skills="python,llms_agentic_ai,ml_data_science,sql_databases,data_eng_kafka_spark">AI / Data Scientist</button>
+            <button class="btn btn-sm persona-btn" data-skills="linux_supercompute_dc,kubernetes_containers,terraform_iac_cicd,sre_observability,python">Cloud / SRE / GPU Infra</button>
+            <button class="btn btn-sm persona-btn" data-skills="epic_clinical_it,sql_databases,agile_pmo_ba,bi_analytics_governance">Healthcare / Epic IT</button>
+            <button class="btn btn-sm persona-btn" data-skills="cyber_soc_siem,networking_cisco_f5,iam_identity,grc_audit_compliance">Cybersecurity &amp; Network</button>
+            <button class="btn btn-sm" id="clear-candidate-skills-btn" style="color:var(--accent-rose);">Reset Selection</button>
+          </div>
+        </div>
+
+        <!-- Resume / Free-text Skill Extractor Bar -->
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <input
+            type="text"
+            id="resume-skill-input"
+            class="filter-input"
+            style="flex:1;min-width:260px;"
+            placeholder="Paste resume skills or tech keywords (e.g., Python, Spring Boot, Kubernetes, SAP, Epic, C#, AWS, SIEM) and press Auto-Detect..."
+          />
+          <button class="btn btn-primary" id="parse-resume-btn">Auto-Detect Skills from Text</button>
+        </div>
+
+        <!-- Categorized Canonical Skill Selector Pills -->
+        <div id="candidate-skill-selector" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-bottom:16px;"></div>
+
+        <!-- Candidate Match Results -->
+        <div id="candidate-match-results"></div>
+      </div>
+
+      <!-- Interactive Bipartite Skill <-> Employer Network Graph -->
+      <div class="panel-card" style="margin-bottom: 20px;">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              🕸️ Interactive Skill ↔ Employer Bipartite Network
+            </div>
+            <div class="panel-subtitle">
+              Visualizes which Memphis employers are hiring for which skills. Click any <b>Skill</b> on the left or <b>Employer</b> on the right to isolate their connected stack and view matching jobs below.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <select id="network-category-filter" class="filter-select">
+              <option value="ALL">All Skill Domains (Top 18)</option>
+            </select>
+            <button class="btn btn-sm" id="reset-network-btn">Show All Connections</button>
+          </div>
+        </div>
+        <div id="network-selection-banner" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:8px;background:rgba(99,102,241,0.14);border:1px solid rgba(99,102,241,0.35);align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"></div>
+        <div id="skill-employer-network-chart"></div>
+      </div>
+
+      <!-- 2D Heatmap Matrix: Top Skills x Top Employers -->
+      <div class="panel-card" style="margin-bottom: 20px;">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              🟩 Skill × Top Employer Hiring Matrix (Click Any Cell to Drill Down)
+            </div>
+            <div class="panel-subtitle">
+              Numbers indicate verified 2026 IT job postings requiring that skill at that company; <b>•</b> indicates additional stack intelligence cited in company research notes.
+            </div>
+          </div>
+        </div>
+        <div id="skill-employer-heatmap"></div>
+      </div>
+
+      <!-- All 37 Canonical Skills Directory & Co-Occurrence Cards -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              📚 Complete Memphis IT Skills Taxonomy &amp; Co-Occurrence Catalog (37 Canonical Skills)
+            </div>
+            <div class="panel-subtitle">
+              Explore every technical domain, hiring employers, average advertised pay, work-mode split, and commonly paired skills.
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <select id="catalog-skill-category" class="filter-select">
+              <option value="ALL">All 6 Skill Categories</option>
+            </select>
+            <select id="catalog-skill-sort" class="filter-select">
+              <option value="jobs">Sort by Verified Job Postings</option>
+              <option value="companies">Sort by Total Hiring Employers</option>
+              <option value="salary">Sort by Highest Avg Salary</option>
+              <option value="name">Sort Alphabetically</option>
+            </select>
+          </div>
+        </div>
+        <div id="skills-catalog-grid" class="cards-grid"></div>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- TAB 2: MARKET VISUALIZATIONS & COMPENSATION                         -->
+    <!-- ================================================================== -->
+    <div id="tab-market" class="tab-pane">
+      <div class="section-grid grid-2">
+        <!-- Skill Demand vs Salary Bubble Chart -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">💎 Skill Demand vs. Advertised Pay Premium</div>
+              <div class="panel-subtitle">
+                X = Number of Memphis Employers Hiring | Y = Avg Midpoint Salary | Bubble Size = Verified Roles
+              </div>
+            </div>
+          </div>
+          <div id="skill-bubble-chart"></div>
+        </div>
+
+        <!-- Role Classification Range & Strip Chart -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">📈 Role Classification Salary Bands &amp; Individual Postings</div>
+              <div class="panel-subtitle">
+                Min-to-Max advertised salary bars, classification average (white ring), and individual salaried postings (dots).
+              </div>
+            </div>
+          </div>
+          <div id="classification-range-chart"></div>
+        </div>
+      </div>
+
+      <div class="section-grid grid-2">
+        <!-- 2026 Memphis Salary Benchmarks -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">🏛️ 2026 Greater Memphis IT Salary Benchmarks (Robert Half / Built In)</div>
+              <div class="panel-subtitle">
+                25th Percentile (Low) — 50th Percentile (Midpoint) — 75th+ Percentile (High) across 15 benchmark titles.
+              </div>
+            </div>
+          </div>
+          <div id="benchmark-comparison-chart"></div>
+        </div>
+
+        <!-- Macro-Sector Breakdown -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">🏭 Greater Memphis Macro-Sector Hiring &amp; Tech Footprint</div>
+              <div class="panel-subtitle">
+                Comparing cataloged IT postings, estimated local tech roles, top skills, and average pay across 9 Memphis industry sectors.
+              </div>
+            </div>
+          </div>
+          <div id="macro-sector-breakdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- TAB 3: MEMPHIS CORRIDORS, MAP & RESIDENCY RULES                     -->
+    <!-- ================================================================== -->
+    <div id="tab-corridors" class="tab-pane">
+      <div class="section-grid grid-main-sidebar">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">🗺️ Interactive Greater Memphis Tri-State Tech Corridor Map (TN / MS / AR)</div>
+              <div class="panel-subtitle">
+                Click any sub-market node on the map to inspect its anchor employers, work-mode split, average compensation, and top skills.
+              </div>
+            </div>
+            <button class="btn btn-sm" id="corridor-reset-btn">Reset Corridor View</button>
+          </div>
+          <div id="memphis-corridor-map"></div>
+        </div>
+
+        <!-- Corridor Inspector Panel -->
+        <div class="panel-card" id="corridor-inspector-panel"></div>
+      </div>
+
+      <!-- Work Mode & Residency / Radius Mandate Intelligence -->
+      <div class="section-grid grid-2">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">🏢 Corridor Work-Mode Distribution (On-site vs. Hybrid vs. Remote)</div>
+              <div class="panel-subtitle">
+                72.9% of cataloged Memphis IT roles are On-site (driven by xAI/SpaceX/Google data centers, healthcare &amp; defense), 22.0% Hybrid, and 5.1% Remote.
+              </div>
+            </div>
+          </div>
+          <div id="corridor-workmode-bars"></div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">📍 Geographic Residency, Radius &amp; Clearance Policy Tracker</div>
+              <div class="panel-subtitle">
+                Critical location rules every Memphis job candidate must know before applying (50-mile hybrid radii, 6-month Shelby Co. residency, federal clearances).
+              </div>
+            </div>
+          </div>
+          <div id="residency-policy-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- TAB 4: EMPLOYER DIRECTORY (86 COMPANIES)                            -->
+    <!-- ================================================================== -->
+    <div id="tab-companies" class="tab-pane">
+      <div class="filter-bar">
+        <div class="filter-group" style="flex:1.5;">
+          <label class="filter-label">Search Employer, Sector, or Notes</label>
+          <input type="text" id="comp-filter-search" class="filter-input" placeholder="e.g. FedEx, St. Jude, xAI, Robotics, SAP..." />
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Status Tier</label>
+          <select id="comp-filter-status" class="filter-select">
+            <option value="ALL">All 86 Employers (Active + Watchlist)</option>
+            <option value="ACTIVE">Active in 118 Job Table (71)</option>
+            <option value="WATCHLIST">2026 Watchlist &amp; Startups (15)</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Macro-Sector</label>
+          <select id="comp-filter-sector" class="filter-select">
+            <option value="ALL">All 9 Macro-Sectors</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Memphis Corridor</label>
+          <select id="comp-filter-corridor" class="filter-select">
+            <option value="ALL">All 9 Corridors</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Hiring for Skill</label>
+          <select id="comp-filter-skill" class="filter-select">
+            <option value="ALL">Any Canonical Skill</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Sort By</label>
+          <select id="comp-filter-sort" class="filter-select">
+            <option value="local_tech">Est. Local Tech Roles (High → Low)</option>
+            <option value="cataloged">Verified IT Postings (High → Low)</option>
+            <option value="total_open">Total 2026 Company Openings</option>
+            <option value="salary">Avg Advertised Salary</option>
+            <option value="name">Company Name (A → Z)</option>
+          </select>
+        </div>
+        <button class="btn" id="comp-filter-reset">Reset</button>
+      </div>
+
+      <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+        <div id="comp-results-summary" style="font-size:13px;color:var(--text-secondary);font-weight:600;"></div>
+      </div>
+
+      <div id="companies-grid" class="cards-grid"></div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- TAB 5: VERIFIED IT JOBS EXPLORER (118 ROLES + SQLITE WASM)          -->
+    <!-- ================================================================== -->
+    <div id="tab-jobs" class="tab-pane">
+      <div class="filter-bar">
+        <div class="filter-group" style="flex:1.6;">
+          <label class="filter-label">SQLite WASM Search</label>
+          <input type="text" id="job-filter-search" class="filter-input" placeholder="Search title, stack, company, requisition (e.g. Kubernetes, Architect, C#, Epic)..." />
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Canonical Skill</label>
+          <select id="job-filter-skill" class="filter-select">
+            <option value="ALL">All Skills (37)</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Role Classification</label>
+          <select id="job-filter-class" class="filter-select">
+            <option value="ALL">All 6 Classifications</option>
+            <option value="Traditional IT">Traditional IT (41)</option>
+            <option value="Software Development">Software Development (31)</option>
+            <option value="Technical Leadership">Technical Leadership (20)</option>
+            <option value="Architecture / Data / AI">Architecture / Data / AI (11)</option>
+            <option value="Tech Support">Tech Support (9)</option>
+            <option value="DevOps / Cloud / SRE">DevOps / Cloud / SRE (6)</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Work Mode</label>
+          <select id="job-filter-workmode" class="filter-select">
+            <option value="ALL">All Work Modes</option>
+            <option value="On-site">On-site (86)</option>
+            <option value="Hybrid">Hybrid (26)</option>
+            <option value="Remote">Remote (6)</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Corridor</label>
+          <select id="job-filter-corridor" class="filter-select">
+            <option value="ALL">All Memphis Corridors</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Compensation Filter</label>
+          <select id="job-filter-salary" class="filter-select">
+            <option value="ALL">All Roles (With or Without Pay)</option>
+            <option value="DISCLOSED">Disclosed Pay Only (44)</option>
+            <option value="100000">$100,000+ Midpoint</option>
+            <option value="125000">$125,000+ Midpoint</option>
+            <option value="150000">$150,000+ Midpoint</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Sort By</label>
+          <select id="job-filter-sort" class="filter-select">
+            <option value="default">Role Category &amp; ID</option>
+            <option value="salary_desc">Salary Midpoint (High → Low)</option>
+            <option value="company">Company Name (A → Z)</option>
+            <option value="title">Job Title (A → Z)</option>
+          </select>
+        </div>
+        <button class="btn" id="job-filter-reset">Reset</button>
+      </div>
+
+      <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div id="job-results-summary" style="font-size:13px;color:var(--text-secondary);font-weight:600;"></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm active" id="view-jobs-cards-btn">Card Grid View</button>
+          <button class="btn btn-sm" id="view-jobs-table-btn">Compact Table View</button>
+          <button class="btn btn-sm btn-primary" id="export-jobs-csv-btn">⬇ Export CSV</button>
+        </div>
+      </div>
+
+      <div id="jobs-results-container"></div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- TAB 6: SQLITE WEBASSEMBLY SLICE & DICE WORKBENCH                    -->
+    <!-- ================================================================== -->
+    <div id="tab-sql" class="tab-pane">
+      <div class="section-grid grid-sidebar-main">
+        <!-- Curated SQL Slices List -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">🧪 12 Curated Analytical Slices</div>
+              <div class="panel-subtitle">
+                Click any analytical slice below to load &amp; execute its SQL query against the in-browser <code>memphis_it_jobs_2026.db</code> SQLite WebAssembly engine.
+              </div>
+            </div>
+          </div>
+          <div id="curated-sql-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- SQL Editor & Live Results -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title" id="sql-active-title">SQLite WebAssembly (`sql.js`) Live Query Workbench</div>
+              <div class="panel-subtitle" id="sql-active-desc">
+                Run any custom SQL query directly in your browser against <code>memphis_it_jobs_2026.db</code>—no backend server required.
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary" id="run-sql-btn">▶ Run SQL (WASM)</button>
+              <button class="btn" id="export-sql-csv-btn">⬇ Export Result CSV</button>
+            </div>
+          </div>
+
+          <!-- 1-Click Table & View Inspector Bar -->
+          <div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+            <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Inspect Table/View:</span>
+            <button class="btn btn-sm sql-table-chip" data-table="v_skill_demand">v_skill_demand</button>
+            <button class="btn btn-sm sql-table-chip" data-table="v_company_skill_matrix">v_company_skill_matrix</button>
+            <button class="btn btn-sm sql-table-chip" data-table="v_jobs_enriched">v_jobs_enriched</button>
+            <button class="btn btn-sm sql-table-chip" data-table="v_company_leaderboard">v_company_leaderboard</button>
+            <button class="btn btn-sm sql-table-chip" data-table="v_corridor_workmode_matrix">v_corridor_workmode_matrix</button>
+            <button class="btn btn-sm sql-table-chip" data-table="v_salary_by_classification">v_salary_by_classification</button>
+            <button class="btn btn-sm sql-table-chip" data-table="companies">companies</button>
+            <button class="btn btn-sm sql-table-chip" data-table="job_postings">job_postings</button>
+            <button class="btn btn-sm sql-table-chip" data-table="canonical_skills">canonical_skills</button>
+            <button class="btn btn-sm sql-table-chip" data-table="salary_benchmarks_2026">salary_benchmarks_2026</button>
+            <button class="btn btn-sm sql-table-chip" data-table="sqlite_master">sqlite_master</button>
+          </div>
+
+          <textarea id="sql-editor-textarea" class="sql-textarea" spellcheck="false"></textarea>
+
+          <div id="sql-status-bar" style="margin:10px 0;font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;"></div>
+          <div id="sql-visual-bar-chart" style="margin-bottom:16px;"></div>
+          <div id="sql-results-table-wrap" class="data-table-wrap"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Deep-Dive Modal -->
+  <div id="detail-modal-backdrop" class="modal-backdrop">
+    <div class="modal-content">
+      <button class="modal-close" id="detail-modal-close" title="Close (Esc)">✕</button>
+      <div id="detail-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Floating Tooltip -->
+  <div id="chart-tooltip" class="chart-tooltip"></div>
+
+  <!-- SQLite DB Bundle + Chart Engine + Main App Logic -->
+  <script src="./db_bundle.js"></script>
+  <script src="./charts.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
