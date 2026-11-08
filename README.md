@@ -1,8 +1,10 @@
 # MEMployers 2026 — Greater Memphis IT Employers & Skills Intelligence Hub
 
-A **100% static-site web application** powered by **in-browser SQLite WebAssembly (`sql.js`)** and served directly from [`docs/`](file:///Users/brad/projects/memployers/docs) for **GitHub Pages**.
+A **100% static-site web application** powered by **in-browser SQLite WebAssembly (`sql.js`)** and served from [`docs/`](file:///Users/brad/projects/memployers/docs).
 
 The primary goal is to let job candidates, career transitioners, and analysts understand **which Greater Memphis employers are hiring for which technical skills**, along with compensation bands, geographic corridors, and residency/hybrid policies.
+
+> **Data Provenance:** All employer profiles, verified 2026 IT job postings, tech stack tags, and regional salary benchmarks in [`memphis_it_jobs_2026.sql`](file:///Users/brad/projects/memployers/memphis_it_jobs_2026.sql) were sourced and compiled through deep research by **Gemini** ([research conversation](https://share.gemini.google/Xr6gA1cK2fxj)), and engineered into this interactive analytics platform using **Gemini 4 Argon**.
 
 ---
 
@@ -14,7 +16,7 @@ All database compilation, skill taxonomy enrichment, static bundling, verificati
 # Full build: rebuild SQLite DB from .sql, enrich skill tables/views, bundle into docs/, and verify
 make build
 
-# Preview the GitHub Pages `docs/` site locally at http://127.0.0.1:8080
+# Preview the `docs/` site locally at http://127.0.0.1:8080
 make serve
 
 # Other individual targets
@@ -24,16 +26,6 @@ make verify   # Run automated integrity checks on the database, 37 skills, 118 j
 make clean    # Remove generated .db and bundle artifacts
 make help     # List all Makefile targets
 ```
-
----
-
-## 🌐 Deploying to GitHub Pages
-
-1. Commit and push the repository (including the generated `docs/` directory).
-2. In your GitHub repository **Settings → Pages**:
-   - **Source:** `Deploy from a branch`
-   - **Branch:** `main` (or `master`) / **Folder:** `/docs`
-3. No backend server is needed—GitHub Pages serves `docs/index.html`, `docs/memphis_it_jobs_2026.db`, and `docs/db_bundle.js` directly, and the browser executes SQL queries client-side via **SQLite 3 WebAssembly (`sql.js`)**.
 
 ---
 
