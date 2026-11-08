@@ -1,16 +1,16 @@
 # MEMployers 2026 — Greater Memphis IT Employers & Skills Intelligence Hub
 
-A **100% static-site web application** powered by **in-browser SQLite WebAssembly (`sql.js`)** and served from [`docs/`](file:///Users/brad/projects/memployers/docs).
+A **100% static-site web application** powered by **in-browser SQLite WebAssembly (`sql.js`)** and hosted at **[https://bradmontgomery.net/memployers](https://bradmontgomery.net/memployers)**.
 
 The primary goal is to let job candidates, career transitioners, and analysts understand **which Greater Memphis employers are hiring for which technical skills**, along with compensation bands, geographic corridors, and residency/hybrid policies.
 
-> **Data Provenance:** All employer profiles, verified 2026 IT job postings, tech stack tags, and regional salary benchmarks in [`memphis_it_jobs_2026.sql`](file:///Users/brad/projects/memployers/memphis_it_jobs_2026.sql) were sourced and compiled through deep research by **Gemini** ([research conversation](https://share.gemini.google/Xr6gA1cK2fxj)), and engineered into this interactive analytics platform using **Gemini 4 Argon**.
+> **Data Provenance:** All employer profiles, verified 2026 IT job postings, tech stack tags, and regional salary benchmarks in `memphis_it_jobs_2026.sql` were sourced and compiled through deep research by **Gemini** ([research conversation](https://share.gemini.google/Xr6gA1cK2fxj)), and engineered into this interactive analytics platform using **Gemini 4 Argon**.
 
 ---
 
 ## 🛠️ Build & Local Preview (`Makefile`)
 
-All database compilation, skill taxonomy enrichment, static bundling, verification, and local preview steps are managed by the [`Makefile`](file:///Users/brad/projects/memployers/Makefile):
+All database compilation, skill taxonomy enrichment, static bundling, verification, and local preview steps are managed by the `Makefile`:
 
 ```bash
 # Full build: rebuild SQLite DB from .sql, enrich skill tables/views, bundle into docs/, and verify
