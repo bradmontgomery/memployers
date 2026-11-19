@@ -48,3 +48,16 @@ make help     # List all Makefile targets
    - Multi-faceted filtering, in-browser SQLite WASM search, Card/Table view toggle, and 1-click CSV export.
 6. **In-Browser SQLite WebAssembly (`sql.js`) Workbench (`Tab 6`)**
    - Includes **12 curated analytical SQL slices**, **1-click Table/View Inspector chips**, and a live SQL editor that executes custom `SELECT` queries directly against `memphis_it_jobs_2026.db` in the browser.
+
+
+## Star History
+
+Just in case anyone ever finds this.
+
+<a href="https://www.star-history.com/?repos=bradmontgomery%2Fmemployers&type=date&legend=bottom-right">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=bradmontgomery/memployers&type=date&theme=dark&legend=bottom-right" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=bradmontgomery/memployers&type=date&legend=bottom-right" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=bradmontgomery/memployers&type=date&legend=bottom-right" />
+ </picture>
+</a>
