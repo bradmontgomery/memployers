@@ -115,7 +115,7 @@
       db,
       "SELECT * FROM companies ORDER BY is_watchlist_only ASC, local_tech_roles_est DESC, company_name ASC"
     );
-    const rawJobs = queryWasmObjects(db, "SELECT * FROM v_jobs_enriched ORDER BY job_id ASC");
+    const rawJobs = queryWasmObjects(db, "SELECT * FROM v_jobs_enriched WHERE is_active = 1 ORDER BY job_id ASC");
     const benchmarks = queryWasmObjects(db, "SELECT * FROM salary_benchmarks_2026 ORDER BY mid_usd DESC");
     const salaryByClass = queryWasmObjects(db, "SELECT * FROM v_salary_by_classification");
     const corridorMatrix = queryWasmObjects(db, "SELECT * FROM v_corridor_workmode_matrix");
@@ -382,6 +382,9 @@
       min_salary_usd: Math.round(Math.min(...rawJobs.map((j) => j.annual_min_usd).filter((v) => v !== null && v !== undefined))),
       max_salary_usd: Math.round(Math.max(...rawJobs.map((j) => j.annual_max_usd).filter((v) => v !== null && v !== undefined))),
       total_canonical_skills: enrichedSkills.length,
+      raw_tag_count: new Set(
+        rawJobs.flatMap((j) => (j.tech_stack_tags || "").split(",").map((t) => t.trim()).filter(Boolean))
+      ).size,
       work_modes: wmTotals
     };
 
@@ -469,6 +472,9 @@
     document.getElementById("nav-count-skills").textContent = k.total_canonical_skills;
     document.getElementById("nav-count-companies").textContent = k.total_companies;
     document.getElementById("nav-count-jobs").textContent = k.total_jobs;
+    document.getElementById("catalog-skill-count").textContent = k.total_canonical_skills;
+    document.getElementById("benchmark-count").textContent = DATA.benchmarks.length;
+    document.getElementById("curated-count").textContent = DATA.curated_queries.length;
 
     const cards = [
       {
@@ -486,7 +492,7 @@
       {
         label: "Canonical Tech Skills",
         value: k.total_canonical_skills,
-        sub: `Normalized across 6 domains & 442 raw stack tags`,
+        sub: `Normalized across ${Object.keys(DATA.skill_categories).length} domains & ${k.raw_tag_count} raw stack tags`,
         accent: "#ec4899"
       },
       {
@@ -518,7 +524,31 @@
   // ---------------------------------------------------------------------------
   // POPULATE FILTER DROPDOWNS
   // ---------------------------------------------------------------------------
+  function appendCount(selectId, value, count) {
+    const opt = document.querySelector(`#${selectId} option[value="${value}"]`);
+    if (opt) opt.textContent += ` (${count})`;
+  }
+
+  function appendCountedOptions(selectId, items, key) {
+    const counts = new Map();
+    items.forEach((it) => counts.set(it[key], (counts.get(it[key]) || 0) + 1));
+    const el = document.getElementById(selectId);
+    [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([val, n]) => {
+        el.insertAdjacentHTML("beforeend", `<option value="${escHtml(val)}">${escHtml(val)} (${n})</option>`);
+      });
+  }
+
   function populateFilterDropdowns() {
+    const k = DATA.kpis;
+    appendCount("comp-filter-status", "ALL", k.total_companies);
+    appendCount("comp-filter-status", "ACTIVE", k.active_companies);
+    appendCount("comp-filter-status", "WATCHLIST", k.watchlist_companies);
+    appendCount("job-filter-skill", "ALL", k.total_canonical_skills);
+    appendCountedOptions("job-filter-class", DATA.jobs, "role_classification");
+    appendCountedOptions("job-filter-workmode", DATA.jobs, "work_mode");
+
     const catNames = Object.keys(DATA.skill_categories);
     const netCatEl = document.getElementById("network-category-filter");
     const catSkillEl = document.getElementById("catalog-skill-category");
@@ -1232,7 +1262,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // TAB 4: EMPLOYER DIRECTORY (86 COMPANIES)
+  // TAB 4: EMPLOYER DIRECTORY
   // ---------------------------------------------------------------------------
   function renderCompaniesDirectory() {
     const q = (document.getElementById("comp-filter-search").value || "").trim().toLowerCase();
@@ -1330,7 +1360,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // TAB 5: VERIFIED IT JOBS EXPLORER (118 ROLES + IN-BROWSER SQLITE WASM)
+  // TAB 5: VERIFIED IT JOBS EXPLORER (IN-BROWSER SQLITE WASM)
   // ---------------------------------------------------------------------------
   function getFilteredJobs() {
     const q = (document.getElementById("job-filter-search").value || "").trim().toLowerCase();

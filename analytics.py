@@ -295,14 +295,16 @@ CANONICAL_SKILLS = [
         "id": "networking_cisco_f5",
         "name": "Enterprise Networking, Cisco & F5",
         "category": "Cybersecurity, Network & OT",
-        "patterns": [r"\brouting/switching\b", r"\bcisco\b", r"\bf5\b", r"\bload\s+balanc", r"\bnetwork\s+architect", r"\bnetwork\s+engineer", r"\bnetwork\s+admin", r"\bnetwork\s+security\b", r"\bnetwork\s+support\b", r"\boptical\s+fabrics\b", r"\bfiber\b", r"\blan/network\+", r"\bsdn\b", r"\bsoftware-defined\s+networking\b"],
+        "patterns": [r"\brouting/switching\b", r"\bcisco\b", r"\bf5\b", r"\bload\s+balanc", r"\bnetwork\s+architect", r"\bnetwork\s+engineer", r"\bnetwork\s+admin", r"\bnetwork\s+security\b", r"\bnetwork\s+support\b", r"\boptical\s+fabrics\b", r"\bfiber\b", r"\blan/network\+", r"\bsdn\b", r"\bsoftware-defined\s+networking\b",
+                     r"\bip\s+telephony\b", r"\bvoip\b", r"\bvoice\s+network", r"\bunified\s+communications\b", r"\btelecom\b"],
         "keywords": ["Routing/Switching", "Cisco", "F5 BIG-IP", "Network Architecture", "Fiber/Optical"]
     },
     {
         "id": "ot_scada_plc_robotics",
         "name": "OT, SCADA, PLC & Robotics Automation",
         "category": "Cybersecurity, Network & OT",
-        "patterns": [r"\boperational\s+technology\b", r"\bot\s+network", r"\bot\s+systems", r"\bscada\b", r"\bplc\b", r"\bsiemens\b", r"\brobotics\b", r"\biiot\b", r"\bsmart\s+manufacturing\b", r"\bsmart\s+grid\b", r"\bindustrial\s+controls\b", r"\bworkflow\s+automation\b", r"\bdigital\s+surgery\b"],
+        "patterns": [r"\boperational\s+technology\b", r"\bot\s+network", r"\bot\s+systems", r"\bscada\b", r"\bplc\b", r"\bsiemens\b", r"\brobotics\b", r"\biiot\b", r"\bsmart\s+manufacturing\b", r"\bsmart\s+grid\b", r"\bindustrial\s+controls\b", r"\bworkflow\s+automation\b", r"\bdigital\s+surgery\b",
+                     r"\bautomated\s+test\s+(systems?|software|equipment)\b", r"\bfixture\s+validation\b"],
         "keywords": ["OT Systems", "SCADA", "Siemens PLC", "Robotics", "IIoT", "Smart Manufacturing"]
     },
 
@@ -332,7 +334,8 @@ CANONICAL_SKILLS = [
         "id": "desktop_field_support",
         "name": "Desktop, Field & Help Desk IT Support",
         "category": "IT Leadership, Ops & Support",
-        "patterns": [r"\bhelp\s+desk\b", r"\bdesktop\s+support\b", r"\bdeskside\b", r"\bl2\s+technical\b", r"\btier\s+1\b", r"\bcomputer\s+imaging\b", r"\bworkstation", r"\brf\s+scanners\b", r"\bperipherals\b", r"\basset\s+inventory\b", r"\bservice\s+desk\b", r"\btech\s+support\b", r"\bsupport\s+ticket\b"],
+        "patterns": [r"\bhelp\s+desk\b", r"\bdesktop\s+support\b", r"\bdeskside\b", r"\bl2\s+technical\b", r"\btier\s+1\b", r"\bcomputer\s+imaging\b", r"\bworkstation", r"\brf\s+scanners\b", r"\bperipherals\b", r"\basset\s+inventory\b", r"\bservice\s+desk\b", r"\btech\s+support\b", r"\bsupport\s+ticket\b",
+                     r"\bhardware\s+support\b", r"\bpos\s+systems?\b"],
         "keywords": ["Help Desk", "Desktop Support", "Field Tech", "Imaging", "Service Desk"]
     }
 ]
@@ -556,12 +559,13 @@ LIMIT 25;"""
     COALESCE(raw_compensation, 'Not Disclosed') AS "Advertised Pay",
     tech_stack_tags AS "AI / Compute Stack"
 FROM v_jobs_enriched
-WHERE tech_stack_tags LIKE '%AI%'
+WHERE is_active = 1
+  AND (tech_stack_tags LIKE '%AI%'
    OR tech_stack_tags LIKE '%LLM%'
    OR tech_stack_tags LIKE '%GPU%'
    OR tech_stack_tags LIKE '%Supercomput%'
    OR tech_stack_tags LIKE '%Machine Learning%'
-   OR tech_stack_tags LIKE '%Quantum%'
+   OR tech_stack_tags LIKE '%Quantum%')
 ORDER BY COALESCE(annual_mid_usd, 0) DESC, company_name ASC;"""
     },
     {
@@ -593,7 +597,7 @@ FROM v_salary_by_classification;"""
     '$' || printf('%,d', CAST(annual_mid_usd AS INT)) AS "Annual Midpoint",
     tech_stack_tags AS "Key Skills"
 FROM v_jobs_enriched
-WHERE annual_mid_usd >= 120000
+WHERE is_active = 1 AND annual_mid_usd >= 120000
 ORDER BY annual_max_usd DESC, annual_mid_usd DESC;"""
     },
     {
@@ -607,13 +611,14 @@ ORDER BY annual_max_usd DESC, annual_mid_usd DESC;"""
     work_mode AS "Work Mode",
     city || ', ' || state AS "Location",
     residency_or_radius_rule AS "Residency / Radius / Onsite Policy"
-FROM job_postings
-WHERE residency_or_radius_rule LIKE '%50%'
+FROM v_jobs_enriched
+WHERE is_active = 1
+  AND (residency_or_radius_rule LIKE '%50%'
    OR residency_or_radius_rule LIKE '%residency%'
    OR residency_or_radius_rule LIKE '%Clearance%'
    OR residency_or_radius_rule LIKE '%Suitability%'
    OR residency_or_radius_rule LIKE '%3 days%'
-   OR residency_or_radius_rule LIKE '%quarter%'
+   OR residency_or_radius_rule LIKE '%quarter%')
 ORDER BY company_name, work_mode;"""
     },
     {
@@ -647,18 +652,19 @@ ORDER BY total_cataloged_roles DESC;"""
     COALESCE(raw_compensation, 'Unlisted') AS "Compensation",
     tech_stack_tags AS "Clinical / Research / Robotics Stack"
 FROM v_jobs_enriched
-WHERE sector LIKE '%Health%'
+WHERE is_active = 1
+  AND (sector LIKE '%Health%'
    OR sector LIKE '%Medical%'
    OR sector LIKE '%Biomed%'
    OR sector LIKE '%Biotech%'
-   OR sector LIKE '%Fundraising%'
+   OR sector LIKE '%Fundraising%')
 ORDER BY company_name, job_id;"""
     },
     {
         "id": "ats_hunting_strategy",
         "title": "ATS Platform Breakdown for Job Seekers",
         "category": "Employers",
-        "description": "Groups the 86 Memphis employers by Applicant Tracking System (Workday, Oracle Cloud HCM, Greenhouse, UltiPro) to help candidates target portal alerts.",
+        "description": "Groups Memphis employers by Applicant Tracking System (Workday, Oracle Cloud HCM, Greenhouse, UltiPro) to help candidates target portal alerts.",
         "sql": """SELECT
     COALESCE(ats_platform, 'Custom / Direct') AS "ATS Platform",
     COUNT(*) AS "Employer Count",
@@ -683,17 +689,18 @@ ORDER BY SUM(local_tech_roles_est) DESC, COUNT(*) DESC;"""
     COALESCE(raw_compensation, 'Unlisted') AS "Pay",
     tech_stack_tags AS "Skills Needed"
 FROM v_jobs_enriched
-WHERE seniority_level LIKE '%Entry%'
+WHERE is_active = 1
+  AND (seniority_level LIKE '%Entry%'
    OR seniority_level LIKE '%Junior%'
    OR seniority_level LIKE '%Student%'
-   OR seniority_level = 'Mid-Level'
+   OR seniority_level = 'Mid-Level')
 ORDER BY seniority_level ASC, company_name ASC;"""
     },
     {
         "id": "watchlist_growth_employers",
-        "title": "2026 Watchlist & High-Growth Startups (15 Employers)",
+        "title": "2026 Watchlist & High-Growth Startups",
         "category": "Employers",
-        "description": "Inspects the 15 watchlist enterprises (Nike, Sylvamo, Mueller Industries, McKesson) and local AI startups (MedHaul, Visalaw.ai, Neural Nexus, Optura AI).",
+        "description": "Inspects watchlist enterprises (Nike, Sylvamo, Mueller Industries, McKesson) and local AI startups (MedHaul, Visalaw.ai, Neural Nexus, Optura AI).",
         "sql": """SELECT
     company_name AS "Watchlist Employer / Startup",
     sector AS "Sector",
@@ -708,7 +715,7 @@ ORDER BY total_company_open_roles_2026 DESC;"""
         "id": "benchmarks_2026",
         "title": "2026 Memphis Salary Benchmarks (Robert Half / Built In)",
         "category": "Compensation",
-        "description": "Displays the 15 reference salary benchmarks for Greater Memphis IT roles from Executive (CIO/CISO) to Core Infrastructure.",
+        "description": "Displays reference salary benchmarks for Greater Memphis IT roles from Executive (CIO/CISO) to Core Infrastructure.",
         "sql": """SELECT
     role_title AS "Benchmark Role",
     tier_category AS "Tier Category",
@@ -888,7 +895,7 @@ def enrich_database() -> None:
             (q["id"], idx, q["title"], q["category"], q["description"], q["sql"])
         )
 
-    jobs = cur.execute("SELECT job_id, company_id, job_title, tech_stack_tags FROM job_postings").fetchall()
+    jobs = cur.execute("SELECT job_id, company_id, job_title, tech_stack_tags, is_active FROM v_jobs_enriched").fetchall()
     company_job_skill_counts: Dict[Tuple[int, str], int] = collections.Counter()
 
     for j in jobs:
@@ -899,7 +906,8 @@ def enrich_database() -> None:
                 "INSERT OR IGNORE INTO job_skill_map (job_id, company_id, skill_id) VALUES (?, ?, ?)",
                 (j["job_id"], j["company_id"], m["id"])
             )
-            company_job_skill_counts[(j["company_id"], m["id"])] += 1
+            if j["is_active"]:
+                company_job_skill_counts[(j["company_id"], m["id"])] += 1
 
     companies = cur.execute("SELECT company_id, company_name, sector, sub_market_corridor, notes FROM companies").fetchall()
     for c in companies:
@@ -941,7 +949,9 @@ def enrich_database() -> None:
             ROUND(MAX(jp.annual_max_usd), 0) AS max_salary_usd,
             GROUP_CONCAT(DISTINCT csm.company_name) AS hiring_employers
         FROM canonical_skills cs
-        LEFT JOIN job_skill_map jsm ON cs.skill_id = jsm.skill_id
+        LEFT JOIN job_skill_map jsm
+               ON cs.skill_id = jsm.skill_id
+              AND jsm.job_id IN (SELECT job_id FROM v_jobs_enriched WHERE is_active = 1)
         LEFT JOIN job_postings jp ON jsm.job_id = jp.job_id
         LEFT JOIN company_skill_map csm ON cs.skill_id = csm.skill_id
         GROUP BY cs.skill_id
@@ -1004,7 +1014,7 @@ def build_full_dataset() -> Dict[str, Any]:
     cur = conn.cursor()
 
     raw_companies = [dict(r) for r in cur.execute("SELECT * FROM companies ORDER BY is_watchlist_only ASC, local_tech_roles_est DESC, company_name ASC")]
-    raw_jobs = [dict(r) for r in cur.execute("SELECT * FROM v_jobs_enriched ORDER BY job_id ASC")]
+    raw_jobs = [dict(r) for r in cur.execute("SELECT * FROM v_jobs_enriched WHERE is_active = 1 ORDER BY job_id ASC")]
     benchmarks = [dict(r) for r in cur.execute("SELECT * FROM salary_benchmarks_2026 ORDER BY mid_usd DESC")]
     salary_by_class = [dict(r) for r in cur.execute("SELECT * FROM v_salary_by_classification")]
     corridor_matrix = [dict(r) for r in cur.execute("SELECT * FROM v_corridor_workmode_matrix")]
@@ -1312,6 +1322,7 @@ def build_full_dataset() -> Dict[str, Any]:
         "min_salary_usd": round(min(j["annual_min_usd"] for j in raw_jobs if j["annual_min_usd"] is not None)),
         "max_salary_usd": round(max(j["annual_max_usd"] for j in raw_jobs if j["annual_max_usd"] is not None)),
         "total_canonical_skills": len(enriched_skills),
+        "raw_tag_count": len({t for j in raw_jobs for t in j["raw_tag_list"]}),
         "work_modes": dict(collections.Counter(j["work_mode"] for j in raw_jobs))
     }
 
@@ -1377,19 +1388,38 @@ def verify_build() -> None:
         if not rf.exists() or rf.stat().st_size == 0:
             raise RuntimeError(f"Missing or empty build artifact: {rf}")
 
+    conn = get_connection()
+    expected_companies = conn.execute("SELECT COUNT(*) FROM companies").fetchone()[0]
+    expected_jobs = conn.execute("SELECT COUNT(*) FROM v_jobs_enriched WHERE is_active = 1").fetchone()[0]
+    expected_skills = conn.execute("SELECT COUNT(*) FROM canonical_skills").fetchone()[0]
+    conn.close()
+
     data = build_full_dataset()
-    assert data["kpis"]["total_companies"] == 86, "Expected 86 companies"
-    assert data["kpis"]["total_jobs"] == 118, "Expected 118 job postings"
-    assert len(data["skills"]) == 37, "Expected 37 canonical skills"
+    assert expected_companies > 0 and expected_jobs > 0, "Database has no companies or active jobs"
+    assert expected_skills == len(CANONICAL_SKILLS), (
+        f"canonical_skills has {expected_skills} rows but the taxonomy defines {len(CANONICAL_SKILLS)}; run --enrich-db"
+    )
+    assert data["kpis"]["total_companies"] == expected_companies, (
+        f"Dataset has {data['kpis']['total_companies']} companies, database has {expected_companies}"
+    )
+    assert data["kpis"]["total_jobs"] == expected_jobs, (
+        f"Dataset has {data['kpis']['total_jobs']} active jobs, database has {expected_jobs}"
+    )
+    assert len(data["skills"]) == expected_skills, f"Dataset has {len(data['skills'])} skills, expected {expected_skills}"
     unmatched = [j for j in data["jobs"] if not j["canonical_skills"]]
-    assert len(unmatched) == 0, f"Found {len(unmatched)} jobs without canonical skills"
+    assert not unmatched, "Active jobs without canonical skills: " + ", ".join(
+        f"{j['job_id']} ({j['job_title']})" for j in unmatched
+    )
 
     for q in CURATED_SQL_QUERIES:
         res = execute_safe_sql(q["sql"])
         assert "error" not in res, f"Query {q['id']} failed: {res.get('error')}"
         assert res["row_count"] > 0, f"Query {q['id']} returned 0 rows"
 
-    print(f"✓ Verified SQLite DB ({DOCS_DB_PATH.stat().st_size:,} bytes), 86 companies, 118 jobs, 37 skills, and 12 SQL slices in docs/.")
+    print(
+        f"✓ Verified SQLite DB ({DOCS_DB_PATH.stat().st_size:,} bytes): {expected_companies} companies, "
+        f"{expected_jobs} active jobs, {expected_skills} skills, and {len(CURATED_SQL_QUERIES)} SQL slices in docs/."
+    )
 
 
 def main() -> None:

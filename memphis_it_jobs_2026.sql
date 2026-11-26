@@ -34,7 +34,7 @@ CREATE TABLE companies (
     career_portal_url TEXT,
     local_tech_roles_est INTEGER DEFAULT 1,
     total_company_open_roles_2026 INTEGER,
-    is_watchlist_only INTEGER DEFAULT 0, -- 0 = Active in 118 Job Table, 1 = Watchlist
+    is_watchlist_only INTEGER DEFAULT 0, -- 0 = Active employer (has verified postings), 1 = Watchlist
     notes TEXT
 );
 
@@ -107,7 +107,7 @@ CREATE TRIGGER job_postings_au AFTER UPDATE ON job_postings BEGIN
 END;
 
 -- ----------------------------------------------------------------------------
--- 4. POPULATE COMPANIES (71 ACTIVE + 15 WATCHLIST/STARTUP EMPLOYERS = 86)
+-- 4. POPULATE COMPANIES (ACTIVE + WATCHLIST/STARTUP EMPLOYERS)
 -- ----------------------------------------------------------------------------
 INSERT INTO companies (company_name, parent_or_group, sector, sub_market_corridor, ats_platform, career_portal_url, local_tech_roles_est, total_company_open_roles_2026, is_watchlist_only, notes) VALUES
 ('xAI (SpaceXSI)', 'xAI / SpaceX Super Intelligence', 'AI & Hyperscale Infrastructure', 'South Metro (Memphis / Southaven)', 'Greenhouse', 'https://x.ai/careers/open-roles', 35, 85, 0, 'Largest active tech/data center recruiter in Memphis/Southaven in late 2026; 100% onsite'),
@@ -199,7 +199,7 @@ INSERT INTO companies (company_name, parent_or_group, sector, sub_market_corrido
 ('Neural Nexus / Optura AI / PopCheck', 'Legacy Power Capital & Local Venture Ecosystem', 'Sovereign Cloud & Applied AI Startups', 'Downtown Memphis & Crosstown', 'Direct / Epicenter', 'https://www.nucamp.co/blog/coding-bootcamp-memphis-tn-memphiss-top-10-startups-that-tech-professionals-should-watch-out-for-in-2025', 0, 10, 1, '$9.4B Neural Nexus compute district; Optura AI (supply chain MLOps), PopCheck (wearable MLOps), Starseer (biotech NLP), Couture Tech');
 
 -- ----------------------------------------------------------------------------
--- 5. POPULATE ALL 118 VERIFIED 2026 IT JOB POSTINGS
+-- 5. POPULATE BASELINE VERIFIED 2026 IT JOB POSTINGS
 -- ----------------------------------------------------------------------------
 INSERT INTO job_postings (
     job_id, company_id, company_name, job_title, role_classification, seniority_level,
@@ -338,7 +338,7 @@ INSERT INTO job_postings (
 (118, (SELECT company_id FROM companies WHERE company_name='Eagle Distributing of Memphis LLC'), 'Eagle Distributing of Memphis LLC', 'IT Technician', 'Tech Support', 'Entry-Mid', 'Memphis', 'TN', '38106', 'On-site', 'Memphis, TN', NULL, 'Active 2026', NULL, NULL, NULL, NULL, NULL, 'PC Hardware/Software Installation, Basic Networking, Support Ticket Logging', 'Indeed', 'https://www.indeed.com/q-information-technology-l-memphis,-tn-jobs.html');
 
 -- ----------------------------------------------------------------------------
--- 6. POPULATE 2026 MEMPHIS SALARY BENCHMARKS (14 ROLES)
+-- 6. POPULATE 2026 MEMPHIS SALARY BENCHMARKS
 -- ----------------------------------------------------------------------------
 INSERT INTO salary_benchmarks_2026 (role_title, tier_category, low_usd, mid_usd, high_usd, benchmark_source) VALUES
 ('Chief Information Officer (CIO)', 'Executive / Leadership', 200000, 246715, 301840, 'Robert Half 2026 Memphis Benchmark'),
@@ -365,6 +365,7 @@ INSERT INTO salary_benchmarks_2026 (role_title, tier_category, low_usd, mid_usd,
 CREATE VIEW v_jobs_enriched AS
 SELECT
     j.job_id,
+    j.company_id,
     j.company_name,
     c.parent_or_group,
     c.sector,
@@ -380,6 +381,8 @@ SELECT
     j.residency_or_radius_rule,
     j.requisition_id,
     j.posting_status_2026,
+    -- Single source of truth for "is this posting still open?"
+    CASE WHEN COALESCE(j.posting_status_2026, '') LIKE 'Closed%' THEN 0 ELSE 1 END AS is_active,
     j.raw_compensation,
     j.pay_basis_raw,
     ROUND(j.annual_min_usd, 2) AS annual_min_usd,
@@ -397,27 +400,28 @@ CREATE VIEW v_salary_by_classification AS
 SELECT
     role_classification,
     COUNT(*) AS total_postings,
-    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM job_postings), 1) AS pct_of_total_jobs,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM v_jobs_enriched WHERE is_active = 1), 1) AS pct_of_total_jobs,
     COUNT(annual_mid_usd) AS postings_with_pay_data,
     ROUND(MIN(annual_min_usd), 0) AS lowest_advertised_usd,
     ROUND(AVG(annual_mid_usd), 0) AS avg_midpoint_usd,
     ROUND(MAX(annual_max_usd), 0) AS highest_advertised_usd
-FROM job_postings
+FROM v_jobs_enriched
+WHERE is_active = 1
 GROUP BY role_classification
 ORDER BY total_postings DESC;
 
 -- View 3: Sub-Market Corridor vs. Work Mode Matrix
 CREATE VIEW v_corridor_workmode_matrix AS
 SELECT
-    c.sub_market_corridor,
+    j.sub_market_corridor,
     COUNT(j.job_id) AS total_cataloged_roles,
     SUM(CASE WHEN j.work_mode = 'On-site' THEN 1 ELSE 0 END) AS onsite_roles,
     SUM(CASE WHEN j.work_mode = 'Hybrid' THEN 1 ELSE 0 END) AS hybrid_roles,
     SUM(CASE WHEN j.work_mode = 'Remote' THEN 1 ELSE 0 END) AS remote_roles,
     ROUND(AVG(j.annual_mid_usd), 0) AS avg_corridor_mid_salary_usd
-FROM job_postings j
-JOIN companies c ON j.company_id = c.company_id
-GROUP BY c.sub_market_corridor
+FROM v_jobs_enriched j
+WHERE j.is_active = 1
+GROUP BY j.sub_market_corridor
 ORDER BY total_cataloged_roles DESC;
 
 -- View 4: Company Leaderboard (Combining Cataloged Roles, Est. Tech Roles & Total Openings)
@@ -435,7 +439,7 @@ SELECT
     c.is_watchlist_only,
     c.career_portal_url
 FROM companies c
-LEFT JOIN job_postings j ON c.company_id = j.company_id
+LEFT JOIN v_jobs_enriched j ON c.company_id = j.company_id AND j.is_active = 1
 GROUP BY c.company_id
 ORDER BY c.is_watchlist_only ASC, c.local_tech_roles_est DESC, cataloged_primary_roles DESC;
 

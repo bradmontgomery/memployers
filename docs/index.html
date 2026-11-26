@@ -50,7 +50,7 @@
     <!-- Navigation Tabs -->
     <nav class="nav-tabs-bar" id="main-nav-tabs">
       <button class="nav-tab active" data-tab="tab-skills">
-        🎯 Skills ↔ Employers Hub <span class="tab-count" id="nav-count-skills">37</span>
+        🎯 Skills ↔ Employers Hub <span class="tab-count" id="nav-count-skills">–</span>
       </button>
       <button class="nav-tab" data-tab="tab-market">
         📊 Market Visualizations &amp; Pay
@@ -59,10 +59,10 @@
         🗺️ Memphis Corridors &amp; Rules <span class="tab-count">9</span>
       </button>
       <button class="nav-tab" data-tab="tab-companies">
-        🏢 Employer Directory <span class="tab-count" id="nav-count-companies">86</span>
+        🏢 Employer Directory <span class="tab-count" id="nav-count-companies">–</span>
       </button>
       <button class="nav-tab" data-tab="tab-jobs">
-        💼 Verified IT Jobs <span class="tab-count" id="nav-count-jobs">118</span>
+        💼 Verified IT Jobs <span class="tab-count" id="nav-count-jobs">–</span>
       </button>
       <button class="nav-tab" data-tab="tab-sql">
         🔬 SQLite WASM Workbench <span class="tab-count">12</span>
@@ -163,7 +163,7 @@
         <div class="panel-header">
           <div>
             <div class="panel-title">
-              📚 Complete Memphis IT Skills Taxonomy &amp; Co-Occurrence Catalog (37 Canonical Skills)
+              📚 Complete Memphis IT Skills Taxonomy &amp; Co-Occurrence Catalog (<span id="catalog-skill-count">–</span> Canonical Skills)
             </div>
             <div class="panel-subtitle">
               Explore every technical domain, hiring employers, average advertised pay, work-mode split, and commonly paired skills.
@@ -224,7 +224,7 @@
             <div>
               <div class="panel-title">🏛️ 2026 Greater Memphis IT Salary Benchmarks (Robert Half / Built In)</div>
               <div class="panel-subtitle">
-                25th Percentile (Low) — 50th Percentile (Midpoint) — 75th+ Percentile (High) across 15 benchmark titles.
+                25th Percentile (Low) — 50th Percentile (Midpoint) — 75th+ Percentile (High) across <span id="benchmark-count">–</span> benchmark titles.
               </div>
             </div>
           </div>
@@ -297,7 +297,7 @@
     </div>
 
     <!-- ================================================================== -->
-    <!-- TAB 4: EMPLOYER DIRECTORY (86 COMPANIES)                            -->
+    <!-- TAB 4: EMPLOYER DIRECTORY                                          -->
     <!-- ================================================================== -->
     <div id="tab-companies" class="tab-pane">
       <div class="filter-bar">
@@ -308,9 +308,9 @@
         <div class="filter-group">
           <label class="filter-label">Status Tier</label>
           <select id="comp-filter-status" class="filter-select">
-            <option value="ALL">All 86 Employers (Active + Watchlist)</option>
-            <option value="ACTIVE">Active in 118 Job Table (71)</option>
-            <option value="WATCHLIST">2026 Watchlist &amp; Startups (15)</option>
+            <option value="ALL">All Employers (Active + Watchlist)</option>
+            <option value="ACTIVE">Active Employers</option>
+            <option value="WATCHLIST">2026 Watchlist &amp; Startups</option>
           </select>
         </div>
         <div class="filter-group">
@@ -352,7 +352,7 @@
     </div>
 
     <!-- ================================================================== -->
-    <!-- TAB 5: VERIFIED IT JOBS EXPLORER (118 ROLES + SQLITE WASM)          -->
+    <!-- TAB 5: VERIFIED IT JOBS EXPLORER (SQLITE WASM)                      -->
     <!-- ================================================================== -->
     <div id="tab-jobs" class="tab-pane">
       <div class="filter-bar">
@@ -363,28 +363,19 @@
         <div class="filter-group">
           <label class="filter-label">Canonical Skill</label>
           <select id="job-filter-skill" class="filter-select">
-            <option value="ALL">All Skills (37)</option>
+            <option value="ALL">All Skills</option>
           </select>
         </div>
         <div class="filter-group">
           <label class="filter-label">Role Classification</label>
           <select id="job-filter-class" class="filter-select">
-            <option value="ALL">All 6 Classifications</option>
-            <option value="Traditional IT">Traditional IT (41)</option>
-            <option value="Software Development">Software Development (31)</option>
-            <option value="Technical Leadership">Technical Leadership (20)</option>
-            <option value="Architecture / Data / AI">Architecture / Data / AI (11)</option>
-            <option value="Tech Support">Tech Support (9)</option>
-            <option value="DevOps / Cloud / SRE">DevOps / Cloud / SRE (6)</option>
+            <option value="ALL">All Classifications</option>
           </select>
         </div>
         <div class="filter-group">
           <label class="filter-label">Work Mode</label>
           <select id="job-filter-workmode" class="filter-select">
             <option value="ALL">All Work Modes</option>
-            <option value="On-site">On-site (86)</option>
-            <option value="Hybrid">Hybrid (26)</option>
-            <option value="Remote">Remote (6)</option>
           </select>
         </div>
         <div class="filter-group">
@@ -436,7 +427,7 @@
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <div class="panel-title">🧪 12 Curated Analytical Slices</div>
+              <div class="panel-title">🧪 <span id="curated-count">–</span> Curated Analytical Slices</div>
               <div class="panel-subtitle">
                 Click any analytical slice below to load &amp; execute its SQL query against the in-browser <code>memphis_it_jobs_2026.db</code> SQLite WebAssembly engine.
               </div>
