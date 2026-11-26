@@ -25,7 +25,7 @@ make apply-delta DELTA=weekly_delta_YYYY_MM_DD.sql
               # Apply one weekly delta to the existing .db: backs up to .db.backup, runs sqlite3 -bail,
               # checks integrity/foreign keys, re-enriches skill tables, prints totals
 make bundle   # Copy .db to docs/memphis_it_jobs_2026.db and generate docs/db_bundle.js + docs/.nojekyll
-make verify   # Run automated integrity checks on the database, 37 skills, 118 jobs, and 12 SQL slices
+make verify   # Check the DB, skill coverage of every active job, the curated SQL slices, and docs/ assets
 make clean    # Remove generated .db and bundle artifacts
 make help     # List all Makefile targets
 ```
@@ -35,8 +35,8 @@ make help     # List all Makefile targets
 ## 🎯 Key Features & Visualizations
 
 1. **Candidate "My Skills" Matcher & Employer Pathfinder (`Tab 1`)**
-   - Toggle any of the **37 normalized canonical skills** across 6 domains, paste resume keywords, or click 1-click **Candidate Personas** (*Full-Stack Java/React*, *.NET / Azure / Angular*, *AI / Data Scientist*, *Cloud / SRE / GPU Infra*, *Healthcare / Epic IT*, *Cybersecurity & Network*).
-   - Ranks all **86 Greater Memphis employers** and **118 verified IT job postings** by skill match and computes **High-ROI Upskill Recommendations**.
+   - Toggle any of the **normalized canonical skills** across 6 domains, paste resume keywords, or click 1-click **Candidate Personas** (*Full-Stack Java/React*, *.NET / Azure / Angular*, *AI / Data Scientist*, *Cloud / SRE / GPU Infra*, *Healthcare / Epic IT*, *Cybersecurity & Network*).
+   - Ranks **Greater Memphis employers** and **active verified IT job postings** by skill match and computes **High-ROI Upskill Recommendations**.
 2. **Interactive Skill ↔ Employer Bipartite Network & 2D Heatmap (`Tab 1`)**
    - **Bipartite Network Graph:** Connects **Technical Skills → Hiring Memphis Employers** with click-to-isolate filtering.
    - **Skill × Top Employer Heatmap Matrix:** 20 × 22 matrix showing verified role counts and company stack intelligence (`•`).
@@ -47,10 +47,10 @@ make help     # List all Makefile targets
    - **Greater Memphis Macro-Sector Footprint**
 4. **Tri-State Memphis Tech Corridors Map & Residency Rules (`Tab 3`)**
    - Interactive SVG map of the 9 Greater Memphis tech corridors (`TN / MS / AR`) + residency/radius policy tracker (*FedEx 50-mile campus rule*, *City of Memphis & MLGW 6-month Shelby Co. residency*, *xAI / SpaceX / Google 100% onsite supercluster*, and *Millington / IRS clearance rules*).
-5. **Employer Directory (`86` Companies) & Verified IT Jobs Explorer (`118` Roles) (`Tabs 4 & 5`)**
+5. **Employer Directory & Verified IT Jobs Explorer (`Tabs 4 & 5`)**
    - Multi-faceted filtering, in-browser SQLite WASM search, Card/Table view toggle, and 1-click CSV export.
 6. **In-Browser SQLite WebAssembly (`sql.js`) Workbench (`Tab 6`)**
-   - Includes **12 curated analytical SQL slices**, **1-click Table/View Inspector chips**, and a live SQL editor that executes custom `SELECT` queries directly against `memphis_it_jobs_2026.db` in the browser.
+   - Includes **curated analytical SQL slices**, **1-click Table/View Inspector chips**, and a live SQL editor that executes custom `SELECT` queries directly against `memphis_it_jobs_2026.db` in the browser.
 
 
 ## Star History
