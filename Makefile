@@ -13,22 +13,43 @@ DB_FILE     := memphis_it_jobs_2026.db
 DOCS_DIR    := docs
 DOCS_DB     := $(DOCS_DIR)/memphis_it_jobs_2026.db
 DOCS_BUNDLE := $(DOCS_DIR)/db_bundle.js
+DELTAS      := $(sort $(wildcard weekly_delta_*.sql))
 
 .DEFAULT_GOAL := build
-.PHONY: all build db bundle verify serve clean help
+.PHONY: all build db apply-delta bundle verify serve clean help
+.DELETE_ON_ERROR:
 
 all: build ## Alias for `build`
 
 build: db bundle verify ## Full build: compile SQLite DB, enrich taxonomy, bundle docs/, and verify
 
-db: $(DB_FILE) ## Rebuild SQLite database from SQL source and enrich with normalized skill/corridor tables
+db: $(DB_FILE) ## Rebuild SQLite database from SQL source + weekly deltas, then enrich skill/corridor tables
 
-$(DB_FILE): $(SQL_SRC) analytics.py
+$(DB_FILE): $(SQL_SRC) $(DELTAS) analytics.py
 	@echo "==> [1/3] Building $(DB_FILE) from $(SQL_SRC)..."
 	rm -f $(DB_FILE)
-	$(SQLITE3) $(DB_FILE) < $(SQL_SRC)
+	$(SQLITE3) -bail $(DB_FILE) < $(SQL_SRC)
+	@for f in $(DELTAS); do \
+		echo "    applying $$f"; \
+		$(SQLITE3) -bail $(DB_FILE) < $$f || exit 1; \
+	done
 	@echo "==> [2/3] Enriching $(DB_FILE) with canonical skills, corridors, and analytical views..."
 	$(PYTHON) analytics.py --enrich-db
+
+apply-delta: ## Apply one weekly delta to the existing DB (usage: make apply-delta DELTA=weekly_delta_YYYY_MM_DD.sql)
+	@test -n "$(DELTA)" || { echo "Usage: make apply-delta DELTA=weekly_delta_YYYY_MM_DD.sql" >&2; exit 1; }
+	@test -f "$(DELTA)" || { echo "Error: delta file '$(DELTA)' not found" >&2; exit 1; }
+	@test -f "$(DB_FILE)" || { echo "Error: $(DB_FILE) not found; run 'make db' first" >&2; exit 1; }
+	@echo "==> Backing up $(DB_FILE) to $(DB_FILE).backup..."
+	cp $(DB_FILE) $(DB_FILE).backup
+	@echo "==> Applying $(DELTA) (stops on first error)..."
+	$(SQLITE3) -bail $(DB_FILE) < $(DELTA)
+	@echo "==> Checking integrity and foreign keys..."
+	@test "$$($(SQLITE3) $(DB_FILE) 'PRAGMA integrity_check;')" = "ok" || { echo "Error: integrity_check failed" >&2; exit 1; }
+	@test -z "$$($(SQLITE3) $(DB_FILE) 'PRAGMA foreign_key_check;')" || { echo "Error: foreign_key_check failed" >&2; exit 1; }
+	@echo "==> Re-enriching skill/corridor tables..."
+	$(PYTHON) analytics.py --enrich-db
+	@echo "==> Totals: $$($(SQLITE3) $(DB_FILE) 'SELECT COUNT(*) FROM companies;') companies, $$($(SQLITE3) $(DB_FILE) 'SELECT COUNT(*) FROM job_postings;') jobs"
 
 bundle: $(DOCS_DB) $(DOCS_BUNDLE) ## Copy SQLite DB and generate WebAssembly/static bundle in docs/
 

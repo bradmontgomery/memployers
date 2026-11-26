@@ -20,7 +20,10 @@ make build
 make serve
 
 # Other individual targets
-make db       # Rebuild memphis_it_jobs_2026.db from memphis_it_jobs_2026.sql + enrich via analytics.py
+make db       # Rebuild memphis_it_jobs_2026.db from memphis_it_jobs_2026.sql + all weekly_delta_*.sql (in date order) + enrich via analytics.py
+make apply-delta DELTA=weekly_delta_YYYY_MM_DD.sql
+              # Apply one weekly delta to the existing .db: backs up to .db.backup, runs sqlite3 -bail,
+              # checks integrity/foreign keys, re-enriches skill tables, prints totals
 make bundle   # Copy .db to docs/memphis_it_jobs_2026.db and generate docs/db_bundle.js + docs/.nojekyll
 make verify   # Run automated integrity checks on the database, 37 skills, 118 jobs, and 12 SQL slices
 make clean    # Remove generated .db and bundle artifacts
