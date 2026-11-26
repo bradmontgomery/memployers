@@ -6,21 +6,18 @@ for in-browser SQLite WebAssembly (`sql.js`) execution, and builds `docs/` stati
 """
 
 import argparse
-import base64
 import collections
 import json
 import re
 import shutil
 import sqlite3
-import sys
 from pathlib import Path
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict, List, Any, Tuple
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "memphis_it_jobs_2026.db"
 DOCS_DIR = BASE_DIR / "docs"
 DOCS_DB_PATH = DOCS_DIR / "memphis_it_jobs_2026.db"
-DOCS_BUNDLE_PATH = DOCS_DIR / "db_bundle.js"
 
 # ----------------------------------------------------------------------------
 # 1. CANONICAL SKILL TAXONOMY (37 Skills across 6 Categories)
@@ -1008,377 +1005,17 @@ def execute_safe_sql(sql_query: str) -> Dict[str, Any]:
         return {"error": str(exc)}
 
 
-def build_full_dataset() -> Dict[str, Any]:
-    """Build the complete enriched dataset payload from `memphis_it_jobs_2026.db`."""
-    conn = get_connection()
-    cur = conn.cursor()
-
-    raw_companies = [dict(r) for r in cur.execute("SELECT * FROM companies ORDER BY is_watchlist_only ASC, local_tech_roles_est DESC, company_name ASC")]
-    raw_jobs = [dict(r) for r in cur.execute("SELECT * FROM v_jobs_enriched WHERE is_active = 1 ORDER BY job_id ASC")]
-    benchmarks = [dict(r) for r in cur.execute("SELECT * FROM salary_benchmarks_2026 ORDER BY mid_usd DESC")]
-    salary_by_class = [dict(r) for r in cur.execute("SELECT * FROM v_salary_by_classification")]
-    corridor_matrix = [dict(r) for r in cur.execute("SELECT * FROM v_corridor_workmode_matrix")]
-    leaderboard = [dict(r) for r in cur.execute("SELECT * FROM v_company_leaderboard")]
-
-    conn.close()
-
-    company_by_name: Dict[str, Dict[str, Any]] = {}
-    for c in raw_companies:
-        corridor_info = classify_corridor(c["sub_market_corridor"])
-        sector_info = classify_macro_sector(c["sector"])
-        c["corridor_group_id"] = corridor_info["id"]
-        c["corridor_group_name"] = corridor_info["name"]
-        c["corridor_short_name"] = corridor_info["short_name"]
-        c["macro_sector_id"] = sector_info["id"]
-        c["macro_sector_name"] = sector_info["name"]
-        c["macro_sector_color"] = sector_info["color"]
-        c["jobs"] = []
-        c["skills_map"] = {}
-        c["work_modes"] = collections.Counter()
-        c["raw_tags_counter"] = collections.Counter()
-        for sk in extract_skills_from_text(f"{c.get('notes', '')} {c.get('sector', '')}"):
-            c["skills_map"][sk["id"]] = {
-                "id": sk["id"],
-                "name": sk["name"],
-                "category": sk["category"],
-                "color": sk["color"],
-                "job_count": 0,
-                "from_notes": True
-            }
-        company_by_name[c["company_name"]] = c
-
-    skill_stats: Dict[str, Dict[str, Any]] = {}
-    for sk in CANONICAL_SKILLS:
-        cat = sk["category"]
-        skill_stats[sk["id"]] = {
-            "id": sk["id"],
-            "name": sk["name"],
-            "category": cat,
-            "color": SKILL_CATEGORIES[cat]["color"],
-            "bg": SKILL_CATEGORIES[cat]["bg"],
-            "keywords": sk["keywords"],
-            "job_ids": [],
-            "companies_active": set(),
-            "companies_all": set(),
-            "salaries": [],
-            "min_salaries": [],
-            "max_salaries": [],
-            "work_modes": collections.Counter(),
-            "classifications": collections.Counter(),
-            "seniorities": collections.Counter(),
-            "raw_tags": collections.Counter(),
-            "co_skills": collections.Counter()
-        }
-
-    for c in raw_companies:
-        for sid in c["skills_map"]:
-            skill_stats[sid]["companies_all"].add(c["company_name"])
-
-    for j in raw_jobs:
-        cname = j["company_name"]
-        comp = company_by_name.get(cname)
-        corridor_info = classify_corridor(j["sub_market_corridor"])
-        sector_info = classify_macro_sector(j["sector"])
-        j["corridor_group_id"] = corridor_info["id"]
-        j["corridor_group_name"] = corridor_info["name"]
-        j["corridor_short_name"] = corridor_info["short_name"]
-        j["macro_sector_id"] = sector_info["id"]
-        j["macro_sector_name"] = sector_info["name"]
-        j["macro_sector_color"] = sector_info["color"]
-
-        raw_tag_list = [t.strip() for t in (j.get("tech_stack_tags") or "").split(",") if t.strip()]
-        j["raw_tag_list"] = raw_tag_list
-
-        matched_skills = extract_skills_from_text(f"{j['job_title']} , {j.get('tech_stack_tags') or ''}")
-        j["canonical_skills"] = matched_skills
-        j["skill_ids"] = [m["id"] for m in matched_skills]
-
-        if comp:
-            comp["jobs"].append({
-                "job_id": j["job_id"],
-                "job_title": j["job_title"],
-                "role_classification": j["role_classification"],
-                "seniority_level": j["seniority_level"],
-                "work_mode": j["work_mode"],
-                "city": j["city"],
-                "state": j["state"],
-                "raw_compensation": j["raw_compensation"],
-                "annual_mid_usd": j["annual_mid_usd"],
-                "annual_min_usd": j["annual_min_usd"],
-                "annual_max_usd": j["annual_max_usd"],
-                "tech_stack_tags": j["tech_stack_tags"],
-                "skill_ids": j["skill_ids"],
-                "source_url": j["source_url"],
-                "posting_status_2026": j["posting_status_2026"],
-                "residency_or_radius_rule": j["residency_or_radius_rule"]
-            })
-            comp["work_modes"][j["work_mode"]] += 1
-            for rt in raw_tag_list:
-                comp["raw_tags_counter"][rt] += 1
-            for m in matched_skills:
-                sid = m["id"]
-                if sid not in comp["skills_map"]:
-                    comp["skills_map"][sid] = {
-                        "id": sid,
-                        "name": m["name"],
-                        "category": m["category"],
-                        "color": m["color"],
-                        "job_count": 0,
-                        "from_notes": False
-                    }
-                comp["skills_map"][sid]["job_count"] += 1
-
-        for m in matched_skills:
-            st = skill_stats[m["id"]]
-            st["job_ids"].append(j["job_id"])
-            st["companies_active"].add(cname)
-            st["companies_all"].add(cname)
-            st["work_modes"][j["work_mode"]] += 1
-            st["classifications"][j["role_classification"]] += 1
-            st["seniorities"][j["seniority_level"]] += 1
-            if j["annual_mid_usd"] is not None:
-                st["salaries"].append(j["annual_mid_usd"])
-                st["min_salaries"].append(j["annual_min_usd"])
-                st["max_salaries"].append(j["annual_max_usd"])
-            for rt in raw_tag_list:
-                st["raw_tags"][rt] += 1
-            for m2 in matched_skills:
-                if m2["id"] != m["id"]:
-                    st["co_skills"][m2["id"]] += 1
-
-    enriched_companies = []
-    for c in raw_companies:
-        skills_list = sorted(
-            c["skills_map"].values(),
-            key=lambda x: (-x["job_count"], x["name"])
-        )
-        c["skills"] = skills_list
-        c["skill_ids"] = [s["id"] for s in skills_list]
-        c["work_modes"] = dict(c["work_modes"])
-        c["top_raw_tags"] = [k for k, _ in c["raw_tags_counter"].most_common(12)]
-        del c["skills_map"]
-        del c["raw_tags_counter"]
-        salaries = [j["annual_mid_usd"] for j in c["jobs"] if j["annual_mid_usd"] is not None]
-        c["avg_mid_usd"] = round(sum(salaries) / len(salaries)) if salaries else None
-        c["min_usd"] = round(min(j["annual_min_usd"] for j in c["jobs"] if j["annual_min_usd"] is not None)) if salaries else None
-        c["max_usd"] = round(max(j["annual_max_usd"] for j in c["jobs"] if j["annual_max_usd"] is not None)) if salaries else None
-        c["cataloged_jobs_count"] = len(c["jobs"])
-        enriched_companies.append(c)
-
-    enriched_skills = []
-    for sid, st in skill_stats.items():
-        sals = st["salaries"]
-        avg_sal = round(sum(sals) / len(sals)) if sals else None
-        min_sal = round(min(st["min_salaries"])) if st["min_salaries"] else None
-        max_sal = round(max(st["max_salaries"])) if st["max_salaries"] else None
-
-        comp_breakdown = []
-        for cname in sorted(st["companies_all"]):
-            comp_obj = company_by_name[cname]
-            j_cnt = sum(1 for j in comp_obj["jobs"] if sid in j["skill_ids"])
-            comp_breakdown.append({
-                "company_id": comp_obj["company_id"],
-                "company_name": cname,
-                "sector": comp_obj["sector"],
-                "macro_sector_name": comp_obj["macro_sector_name"],
-                "corridor_short_name": comp_obj["corridor_short_name"],
-                "job_count": j_cnt,
-                "local_tech_roles_est": comp_obj["local_tech_roles_est"],
-                "is_watchlist_only": comp_obj["is_watchlist_only"],
-                "career_portal_url": comp_obj["career_portal_url"]
-            })
-        comp_breakdown.sort(key=lambda x: (-x["job_count"], -x["local_tech_roles_est"], x["company_name"]))
-
-        co_list = [
-            {
-                "skill_id": co_id,
-                "skill_name": skill_stats[co_id]["name"],
-                "color": skill_stats[co_id]["color"],
-                "count": cnt
-            }
-            for co_id, cnt in st["co_skills"].most_common(8)
-        ]
-
-        enriched_skills.append({
-            "id": sid,
-            "name": st["name"],
-            "category": st["category"],
-            "color": st["color"],
-            "bg": st["bg"],
-            "keywords": st["keywords"],
-            "job_count": len(st["job_ids"]),
-            "job_ids": st["job_ids"],
-            "active_company_count": len(st["companies_active"]),
-            "total_company_count": len(st["companies_all"]),
-            "companies": comp_breakdown,
-            "avg_salary_usd": avg_sal,
-            "min_salary_usd": min_sal,
-            "max_salary_usd": max_sal,
-            "pay_sample_size": len(sals),
-            "work_modes": dict(st["work_modes"]),
-            "classifications": dict(st["classifications"]),
-            "seniorities": dict(st["seniorities"]),
-            "top_raw_tags": [{"tag": k, "count": v} for k, v in st["raw_tags"].most_common(12)],
-            "co_occurring_skills": co_list
-        })
-
-    enriched_skills.sort(key=lambda x: (-x["job_count"], -x["total_company_count"], x["name"]))
-
-    corridor_summaries = []
-    for cg in CORRIDOR_GROUPS:
-        cid = cg["id"]
-        c_comps = [c for c in enriched_companies if c["corridor_group_id"] == cid]
-        c_jobs = [j for j in raw_jobs if j["corridor_group_id"] == cid]
-        c_sals = [j["annual_mid_usd"] for j in c_jobs if j["annual_mid_usd"] is not None]
-        wm_counts = collections.Counter(j["work_mode"] for j in c_jobs)
-        sk_counts = collections.Counter()
-        for j in c_jobs:
-            for sid in j["skill_ids"]:
-                sk_counts[sid] += 1
-        top_skills = [
-            {
-                "id": sid,
-                "name": skill_stats[sid]["name"],
-                "color": skill_stats[sid]["color"],
-                "count": cnt
-            }
-            for sid, cnt in sk_counts.most_common(8)
-        ]
-        corridor_summaries.append({
-            **cg,
-            "company_count": len(c_comps),
-            "active_company_count": sum(1 for c in c_comps if not c["is_watchlist_only"]),
-            "watchlist_company_count": sum(1 for c in c_comps if c["is_watchlist_only"]),
-            "job_count": len(c_jobs),
-            "local_tech_roles_est": sum(c["local_tech_roles_est"] or 0 for c in c_comps),
-            "total_open_roles_2026": sum(c["total_company_open_roles_2026"] or 0 for c in c_comps),
-            "avg_salary_usd": round(sum(c_sals) / len(c_sals)) if c_sals else None,
-            "work_modes": {
-                "On-site": wm_counts.get("On-site", 0),
-                "Hybrid": wm_counts.get("Hybrid", 0),
-                "Remote": wm_counts.get("Remote", 0)
-            },
-            "top_skills": top_skills,
-            "top_employers": [
-                {
-                    "company_name": c["company_name"],
-                    "local_tech_roles_est": c["local_tech_roles_est"],
-                    "cataloged_jobs_count": c["cataloged_jobs_count"],
-                    "is_watchlist_only": c["is_watchlist_only"]
-                }
-                for c in sorted(c_comps, key=lambda x: (-x["local_tech_roles_est"], -x["cataloged_jobs_count"]))[:8]
-            ]
-        })
-
-    sector_summaries = []
-    for ms in MACRO_SECTORS:
-        mid = ms["id"]
-        s_comps = [c for c in enriched_companies if c["macro_sector_id"] == mid]
-        s_jobs = [j for j in raw_jobs if j["macro_sector_id"] == mid]
-        s_sals = [j["annual_mid_usd"] for j in s_jobs if j["annual_mid_usd"] is not None]
-        sk_counts = collections.Counter()
-        for j in s_jobs:
-            for sid in j["skill_ids"]:
-                sk_counts[sid] += 1
-        sector_summaries.append({
-            **ms,
-            "company_count": len(s_comps),
-            "job_count": len(s_jobs),
-            "local_tech_roles_est": sum(c["local_tech_roles_est"] or 0 for c in s_comps),
-            "total_open_roles_2026": sum(c["total_company_open_roles_2026"] or 0 for c in s_comps),
-            "avg_salary_usd": round(sum(s_sals) / len(s_sals)) if s_sals else None,
-            "top_skills": [
-                {"id": sid, "name": skill_stats[sid]["name"], "color": skill_stats[sid]["color"], "count": cnt}
-                for sid, cnt in sk_counts.most_common(6)
-            ],
-            "companies": [
-                {
-                    "company_id": c["company_id"],
-                    "company_name": c["company_name"],
-                    "local_tech_roles_est": c["local_tech_roles_est"],
-                    "cataloged_jobs_count": c["cataloged_jobs_count"],
-                    "total_company_open_roles_2026": c["total_company_open_roles_2026"],
-                    "is_watchlist_only": c["is_watchlist_only"]
-                }
-                for c in sorted(s_comps, key=lambda x: (x["is_watchlist_only"], -x["local_tech_roles_est"], -x["cataloged_jobs_count"]))
-            ]
-        })
-    sector_summaries.sort(key=lambda x: (-x["local_tech_roles_est"], -x["job_count"]))
-
-    all_mid_salaries = sorted(j["annual_mid_usd"] for j in raw_jobs if j["annual_mid_usd"] is not None)
-    median_salary = all_mid_salaries[len(all_mid_salaries) // 2] if all_mid_salaries else 0
-    mean_salary = round(sum(all_mid_salaries) / len(all_mid_salaries)) if all_mid_salaries else 0
-
-    kpis = {
-        "total_companies": len(enriched_companies),
-        "active_companies": sum(1 for c in enriched_companies if not c["is_watchlist_only"]),
-        "watchlist_companies": sum(1 for c in enriched_companies if c["is_watchlist_only"]),
-        "total_jobs": len(raw_jobs),
-        "jobs_with_salary": len(all_mid_salaries),
-        "local_tech_roles_est": sum(c["local_tech_roles_est"] or 0 for c in enriched_companies),
-        "total_company_open_roles": sum(c["total_company_open_roles_2026"] or 0 for c in enriched_companies),
-        "median_salary_usd": round(median_salary),
-        "mean_salary_usd": mean_salary,
-        "min_salary_usd": round(min(j["annual_min_usd"] for j in raw_jobs if j["annual_min_usd"] is not None)),
-        "max_salary_usd": round(max(j["annual_max_usd"] for j in raw_jobs if j["annual_max_usd"] is not None)),
-        "total_canonical_skills": len(enriched_skills),
-        "raw_tag_count": len({t for j in raw_jobs for t in j["raw_tag_list"]}),
-        "work_modes": dict(collections.Counter(j["work_mode"] for j in raw_jobs))
-    }
-
-    curated_with_results = []
-    for q in CURATED_SQL_QUERIES:
-        res = execute_safe_sql(q["sql"])
-        curated_with_results.append({**q, "precomputed": res})
-
-    return {
-        "kpis": kpis,
-        "skill_categories": SKILL_CATEGORIES,
-        "skills": enriched_skills,
-        "companies": enriched_companies,
-        "jobs": raw_jobs,
-        "corridors": corridor_summaries,
-        "sectors": sector_summaries,
-        "benchmarks": benchmarks,
-        "views": {
-            "salary_by_classification": salary_by_class,
-            "corridor_workmode_matrix": corridor_matrix,
-            "company_leaderboard": leaderboard
-        },
-        "curated_queries": curated_with_results
-    }
-
-
-def bundle_docs() -> Dict[str, Any]:
-    """
-    Copy `memphis_it_jobs_2026.db` into `docs/memphis_it_jobs_2026.db` for SQLite WebAssembly
-    AND generate `docs/db_bundle.js` containing both `window.MEMPHIS_DB_BASE64` (raw SQLite bytes)
-    and `window.MEMPHIS_STATIC_DATA` (pre-hydrated dataset).
-    """
+def bundle_docs() -> None:
+    """Copy `memphis_it_jobs_2026.db` into `docs/` for the in-browser SQLite WebAssembly app."""
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
     shutil.copy2(DB_PATH, DOCS_DB_PATH)
 
-    db_bytes = DB_PATH.read_bytes()
-    db_b64 = base64.b64encode(db_bytes).decode("ascii")
-    data = build_full_dataset()
-
-    js_lines = [
-        "// Auto-generated by `make build` (analytics.py). Do not edit manually.",
-        f"window.MEMPHIS_DB_SIZE_BYTES = {len(db_bytes)};",
-        f'window.MEMPHIS_DB_BASE64 = "{db_b64}";',
-        "window.MEMPHIS_STATIC_DATA = " + json.dumps(data, ensure_ascii=False) + ";",
-        ""
-    ]
-    DOCS_BUNDLE_PATH.write_text("\n".join(js_lines), encoding="utf-8")
-    return data
-
 
 def verify_build() -> None:
-    """Verify database integrity, skill taxonomy coverage, and static `docs/` assets."""
+    """Verify database integrity, skill taxonomy coverage, curated queries, and static `docs/` assets."""
     required_files = [
         DB_PATH,
         DOCS_DB_PATH,
-        DOCS_BUNDLE_PATH,
         DOCS_DIR / "index.html",
         DOCS_DIR / "styles.css",
         DOCS_DIR / "charts.js",
@@ -1387,28 +1024,29 @@ def verify_build() -> None:
     for rf in required_files:
         if not rf.exists() or rf.stat().st_size == 0:
             raise RuntimeError(f"Missing or empty build artifact: {rf}")
+    assert DOCS_DB_PATH.read_bytes() == DB_PATH.read_bytes(), "docs/ database is stale; run --bundle-docs"
 
     conn = get_connection()
-    expected_companies = conn.execute("SELECT COUNT(*) FROM companies").fetchone()[0]
-    expected_jobs = conn.execute("SELECT COUNT(*) FROM v_jobs_enriched WHERE is_active = 1").fetchone()[0]
-    expected_skills = conn.execute("SELECT COUNT(*) FROM canonical_skills").fetchone()[0]
+    companies = conn.execute("SELECT COUNT(*) FROM companies").fetchone()[0]
+    active_jobs = conn.execute("SELECT COUNT(*) FROM v_jobs_enriched WHERE is_active = 1").fetchone()[0]
+    skills = conn.execute("SELECT COUNT(*) FROM canonical_skills").fetchone()[0]
+    untagged = conn.execute(
+        """SELECT job_id, job_title FROM v_jobs_enriched
+           WHERE is_active = 1 AND job_id NOT IN (SELECT job_id FROM job_skill_map)
+           ORDER BY job_id"""
+    ).fetchall()
+    integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
+    fk_problems = conn.execute("PRAGMA foreign_key_check").fetchall()
     conn.close()
 
-    data = build_full_dataset()
-    assert expected_companies > 0 and expected_jobs > 0, "Database has no companies or active jobs"
-    assert expected_skills == len(CANONICAL_SKILLS), (
-        f"canonical_skills has {expected_skills} rows but the taxonomy defines {len(CANONICAL_SKILLS)}; run --enrich-db"
+    assert integrity == "ok", f"integrity_check failed: {integrity}"
+    assert not fk_problems, f"foreign_key_check found {len(fk_problems)} problem(s)"
+    assert companies > 0 and active_jobs > 0, "Database has no companies or active jobs"
+    assert skills == len(CANONICAL_SKILLS), (
+        f"canonical_skills has {skills} rows but the taxonomy defines {len(CANONICAL_SKILLS)}; run --enrich-db"
     )
-    assert data["kpis"]["total_companies"] == expected_companies, (
-        f"Dataset has {data['kpis']['total_companies']} companies, database has {expected_companies}"
-    )
-    assert data["kpis"]["total_jobs"] == expected_jobs, (
-        f"Dataset has {data['kpis']['total_jobs']} active jobs, database has {expected_jobs}"
-    )
-    assert len(data["skills"]) == expected_skills, f"Dataset has {len(data['skills'])} skills, expected {expected_skills}"
-    unmatched = [j for j in data["jobs"] if not j["canonical_skills"]]
-    assert not unmatched, "Active jobs without canonical skills: " + ", ".join(
-        f"{j['job_id']} ({j['job_title']})" for j in unmatched
+    assert not untagged, "Active jobs without canonical skills: " + ", ".join(
+        f"{r['job_id']} ({r['job_title']})" for r in untagged
     )
 
     for q in CURATED_SQL_QUERIES:
@@ -1417,15 +1055,15 @@ def verify_build() -> None:
         assert res["row_count"] > 0, f"Query {q['id']} returned 0 rows"
 
     print(
-        f"✓ Verified SQLite DB ({DOCS_DB_PATH.stat().st_size:,} bytes): {expected_companies} companies, "
-        f"{expected_jobs} active jobs, {expected_skills} skills, and {len(CURATED_SQL_QUERIES)} SQL slices in docs/."
+        f"✓ Verified SQLite DB ({DOCS_DB_PATH.stat().st_size:,} bytes): {companies} companies, "
+        f"{active_jobs} active jobs, {skills} skills, and {len(CURATED_SQL_QUERIES)} SQL slices in docs/."
     )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build & verify MEMployers 2026 SQLite WASM & docs/ artifacts.")
     parser.add_argument("--enrich-db", action="store_true", help="Enrich memphis_it_jobs_2026.db with skill & corridor tables/views.")
-    parser.add_argument("--bundle-docs", action="store_true", help="Copy .db and write db_bundle.js into docs/.")
+    parser.add_argument("--bundle-docs", action="store_true", help="Copy the .db into docs/.")
     parser.add_argument("--verify", action="store_true", help="Verify all database tables, SQL queries, and docs/ files.")
     args = parser.parse_args()
 
@@ -1441,7 +1079,7 @@ def main() -> None:
         print("✓ Enriched memphis_it_jobs_2026.db with normalized skill, corridor, and sector tables & views.")
     if args.bundle_docs:
         bundle_docs()
-        print(f"✓ Generated docs/memphis_it_jobs_2026.db and docs/db_bundle.js ({DOCS_BUNDLE_PATH.stat().st_size:,} bytes).")
+        print(f"✓ Copied database to {DOCS_DB_PATH.relative_to(BASE_DIR)} ({DOCS_DB_PATH.stat().st_size:,} bytes).")
     if args.verify:
         verify_build()
 

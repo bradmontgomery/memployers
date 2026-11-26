@@ -12,7 +12,6 @@ SQL_SRC     := memphis_it_jobs_2026.sql
 DB_FILE     := memphis_it_jobs_2026.db
 DOCS_DIR    := docs
 DOCS_DB     := $(DOCS_DIR)/memphis_it_jobs_2026.db
-DOCS_BUNDLE := $(DOCS_DIR)/db_bundle.js
 DELTAS      := $(sort $(wildcard weekly_delta_*.sql))
 
 .DEFAULT_GOAL := build
@@ -51,14 +50,14 @@ apply-delta: ## Apply one weekly delta to the existing DB (usage: make apply-del
 	$(PYTHON) analytics.py --enrich-db
 	@echo "==> Totals: $$($(SQLITE3) $(DB_FILE) 'SELECT COUNT(*) FROM companies;') companies, $$($(SQLITE3) $(DB_FILE) 'SELECT COUNT(*) FROM job_postings;') jobs"
 
-bundle: $(DOCS_DB) $(DOCS_BUNDLE) ## Copy SQLite DB and generate WebAssembly/static bundle in docs/
+bundle: $(DOCS_DB) ## Copy the SQLite DB into docs/ for the in-browser app
 
-$(DOCS_DB) $(DOCS_BUNDLE): $(DB_FILE) analytics.py
-	@echo "==> [3/3] Bundling $(DOCS_DB) and $(DOCS_BUNDLE) for GitHub Pages..."
+$(DOCS_DB): $(DB_FILE)
+	@echo "==> [3/3] Copying $(DB_FILE) to $(DOCS_DB) for GitHub Pages..."
 	$(PYTHON) analytics.py --bundle-docs
 	touch $(DOCS_DIR)/.nojekyll
 
-verify: $(DOCS_DB) $(DOCS_BUNDLE) ## Run integrity checks on SQLite DB, skill coverage, SQL slices, and docs/ assets
+verify: $(DOCS_DB) ## Run integrity checks on SQLite DB, skill coverage, SQL slices, and docs/ assets
 	@echo "==> Verifying build artifacts..."
 	$(PYTHON) analytics.py --verify
 
@@ -68,7 +67,7 @@ serve: build ## Serve `docs/` locally with Python's static HTTP server (default 
 
 clean: ## Remove generated SQLite databases and compiled bundle files
 	@echo "==> Cleaning generated build artifacts..."
-	rm -f $(DB_FILE) $(DOCS_DB) $(DOCS_BUNDLE)
+	rm -f $(DB_FILE) $(DOCS_DB)
 	rm -rf __pycache__
 
 help: ## Show available Make targets

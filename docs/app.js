@@ -5,7 +5,7 @@
  */
 
 (function () {
-  let DATA = window.MEMPHIS_STATIC_DATA || null;
+  let DATA = null;
   let WASM_DB = null;
 
   const STATE = {
@@ -45,20 +45,7 @@
   // ---------------------------------------------------------------------------
   // SQLITE WEBASSEMBLY (sql.js) LOADER & IN-BROWSER HYDRATION
   // ---------------------------------------------------------------------------
-  function base64ToUint8Array(b64) {
-    const binStr = window.atob(b64);
-    const len = binStr.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binStr.charCodeAt(i);
-    }
-    return bytes;
-  }
-
   async function loadSqliteDatabaseBytes() {
-    if (window.MEMPHIS_DB_BASE64) {
-      return base64ToUint8Array(window.MEMPHIS_DB_BASE64);
-    }
     const resp = await fetch("./memphis_it_jobs_2026.db");
     if (!resp.ok) {
       throw new Error(`HTTP ${resp.status} fetching memphis_it_jobs_2026.db`);
@@ -419,31 +406,29 @@
   // ---------------------------------------------------------------------------
   async function initApp() {
     const badgeEl = document.getElementById("wasm-engine-badge");
-    const sizeKb = Math.round((window.MEMPHIS_DB_SIZE_BYTES || 253952) / 1024);
 
-    if (typeof window.initSqlJs === "function") {
-      try {
-        const SQL = await window.initSqlJs({
-          locateFile: (file) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
-        });
-        const dbBytes = await loadSqliteDatabaseBytes();
-        WASM_DB = new SQL.Database(dbBytes);
-        DATA = hydrateDatasetFromWasmSqlite(WASM_DB);
-        if (badgeEl) {
-          badgeEl.textContent = `⚡ SQLite 3 WASM Ready (${sizeKb} KB)`;
-        }
-      } catch (err) {
-        console.warn("SQLite WASM fallback to pre-hydrated bundle:", err);
-        if (badgeEl) {
-          badgeEl.textContent = `📦 Static Bundle Ready (${sizeKb} KB)`;
-        }
+    try {
+      if (typeof window.initSqlJs !== "function") {
+        throw new Error("The SQLite WebAssembly library (sql.js) did not load from cdnjs.");
       }
-    } else if (badgeEl) {
-      badgeEl.textContent = `📦 Static Bundle Ready (${sizeKb} KB)`;
-    }
-
-    if (!DATA) {
-      document.getElementById("kpi-ribbon").innerHTML = `<div class="panel-card">Failed to load dataset. Run <code>make build</code>.</div>`;
+      const SQL = await window.initSqlJs({
+        locateFile: (file) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}`
+      });
+      const dbBytes = await loadSqliteDatabaseBytes();
+      WASM_DB = new SQL.Database(dbBytes);
+      DATA = hydrateDatasetFromWasmSqlite(WASM_DB);
+      if (badgeEl) {
+        badgeEl.textContent = `⚡ SQLite 3 WASM Ready (${Math.round(dbBytes.length / 1024)} KB)`;
+      }
+    } catch (err) {
+      console.error("Failed to load the jobs database:", err);
+      if (badgeEl) badgeEl.textContent = "⚠️ Database not loaded";
+      const hint =
+        window.location.protocol === "file:"
+          ? "Browsers block loading the database from a local file. Run <code>make serve</code> and open http://127.0.0.1:8080."
+          : "Check your connection and reload. If you're developing locally, run <code>make build</code>, then <code>make serve</code>.";
+      document.getElementById("kpi-ribbon").innerHTML =
+        `<div class="panel-card">Couldn't load the jobs database: ${escHtml(err.message || String(err))}. ${hint}</div>`;
       return;
     }
 
@@ -1553,10 +1538,10 @@
     document.getElementById("sql-active-title").textContent = q.title;
     document.getElementById("sql-active-desc").textContent = q.description;
     document.getElementById("sql-editor-textarea").value = q.sql;
-    executeSqlInWorkbench(q.sql, q.precomputed);
+    executeSqlInWorkbench(q.sql);
   }
 
-  function executeSqlInWorkbench(sqlText, fallbackResult) {
+  function executeSqlInWorkbench(sqlText) {
     const statusEl = document.getElementById("sql-status-bar");
     const tableWrap = document.getElementById("sql-results-table-wrap");
     const chartWrap = document.getElementById("sql-visual-bar-chart");
@@ -1583,18 +1568,8 @@
       } catch (err) {
         result = { error: err.message || String(err) };
       }
-    } else if (fallbackResult) {
-      result = { ...fallbackResult, elapsedMs: "0.10", engine: "Pre-compiled Bundle" };
     } else {
-      // Check if sqlText matches any precomputed curated query
-      const match = (window.MEMPHIS_STATIC_DATA && window.MEMPHIS_STATIC_DATA.curated_queries || []).find(
-        (q) => q.sql.trim() === (sqlText || "").trim()
-      );
-      if (match && match.precomputed) {
-        result = { ...match.precomputed, elapsedMs: "0.10", engine: "Pre-compiled Bundle" };
-      } else {
-        result = { error: "SQLite WebAssembly CDN script is still loading or blocked by offline mode." };
-      }
+      result = { error: "The database isn't loaded yet. Reload the page and try again." };
     }
 
     if (result.error) {
@@ -2193,7 +2168,7 @@
     // SQL Workbench actions
     document.getElementById("run-sql-btn").addEventListener("click", () => {
       const sql = document.getElementById("sql-editor-textarea").value;
-      executeSqlInWorkbench(sql, null);
+      executeSqlInWorkbench(sql);
     });
     document.getElementById("export-sql-csv-btn").addEventListener("click", () => {
       if (!STATE.lastSqlResult || !STATE.lastSqlResult.columns) return;
@@ -2211,7 +2186,7 @@
         document.getElementById("sql-active-title").textContent = `Inspecting ${tbl}`;
         document.getElementById("sql-active-desc").textContent = `Live query against ${tbl} in memphis_it_jobs_2026.db via SQLite WebAssembly.`;
         document.getElementById("sql-editor-textarea").value = sql;
-        executeSqlInWorkbench(sql, null);
+        executeSqlInWorkbench(sql);
       });
     });
 

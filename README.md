@@ -13,7 +13,7 @@ The primary goal is to let job candidates, career transitioners, and analysts un
 All database compilation, skill taxonomy enrichment, static bundling, verification, and local preview steps are managed by the `Makefile`:
 
 ```bash
-# Full build: rebuild SQLite DB from .sql, enrich skill tables/views, bundle into docs/, and verify
+# Full build: rebuild SQLite DB from .sql, enrich skill tables/views, copy into docs/, and verify
 make build
 
 # Preview the `docs/` site locally at http://127.0.0.1:8080
@@ -24,9 +24,9 @@ make db       # Rebuild memphis_it_jobs_2026.db from memphis_it_jobs_2026.sql + 
 make apply-delta DELTA=weekly_delta_YYYY_MM_DD.sql
               # Apply one weekly delta to the existing .db: backs up to .db.backup, runs sqlite3 -bail,
               # checks integrity/foreign keys, re-enriches skill tables, prints totals
-make bundle   # Copy .db to docs/memphis_it_jobs_2026.db and generate docs/db_bundle.js + docs/.nojekyll
+make bundle   # Copy .db to docs/memphis_it_jobs_2026.db (the browser loads it with sql.js) + docs/.nojekyll
 make verify   # Check the DB, skill coverage of every active job, the curated SQL slices, and docs/ assets
-make clean    # Remove generated .db and bundle artifacts
+make clean    # Remove generated .db files
 make help     # List all Makefile targets
 ```
 
