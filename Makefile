@@ -74,8 +74,7 @@ typecheck: ## Type-check with ty
 test: ## Run tests with coverage (fails below 90%); writes coverage.json for `make crap`
 	$(RUN) pytest --cov --cov-report=term --cov-report=json
 
-crap: ## Fail if any function's CRAP score (complexity x missing coverage) exceeds 30
-	@test -f coverage.json || $(MAKE) --no-print-directory test
+crap: test ## Fail if any function's CRAP score (complexity x missing coverage) exceeds 30 (runs tests first)
 	$(RUN) python tools/crap.py --coverage coverage.json
 
 ci: lint typecheck test crap build ## Everything CI runs: lint, types, tests, CRAP, then the full build

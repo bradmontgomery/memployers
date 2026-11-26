@@ -118,7 +118,7 @@ def execute_safe_sql(db_path: Path, sql: str, max_rows: int = 500) -> QueryResul
     if _first_keyword(sql) not in READ_ONLY_VERBS:
         return QueryResult(error="Only read-only SELECT / WITH / PRAGMA / EXPLAIN queries are permitted.")
     try:
-        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        conn = sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True)
         try:
             cur = conn.execute(sql)
             columns = [d[0] for d in cur.description or []]
