@@ -4,78 +4,92 @@
 # ==============================================================================
 
 SHELL       := /bin/sh
-SQLITE3     ?= sqlite3
-PYTHON      ?= python3
+UV          ?= uv
+RUN         := $(UV) run
+MEMPLOYERS  := $(RUN) python -m memployers
 PORT        ?= 8080
 
 SQL_SRC     := memphis_it_jobs_2026.sql
 DB_FILE     := memphis_it_jobs_2026.db
 DOCS_DIR    := docs
 DOCS_DB     := $(DOCS_DIR)/memphis_it_jobs_2026.db
-DOCS_BUNDLE := $(DOCS_DIR)/db_bundle.js
 DELTAS      := $(sort $(wildcard weekly_delta_*.sql))
+TAXONOMY    := $(wildcard taxonomy/*.toml)
+PY_SRC      := $(wildcard src/memployers/*.py)
+PY_PATHS    := src tests tools
 
 .DEFAULT_GOAL := build
-.PHONY: all build db apply-delta bundle verify serve clean help
+.PHONY: all build db apply-delta bundle verify serve lint format typecheck test crap ci clean help
 .DELETE_ON_ERROR:
 
 all: build ## Alias for `build`
 
-build: db bundle verify ## Full build: compile SQLite DB, enrich taxonomy, bundle docs/, and verify
+# ------------------------------------------------------------------------------
+# Data build
+# ------------------------------------------------------------------------------
+build: db bundle verify ## Full build: rebuild + enrich the DB, copy it into docs/, and verify
 
-db: $(DB_FILE) ## Rebuild SQLite database from SQL source + weekly deltas, then enrich skill/corridor tables
+db: $(DB_FILE) ## Rebuild the DB from the baseline SQL + all weekly deltas, then enrich it
 
-$(DB_FILE): $(SQL_SRC) $(DELTAS) analytics.py
-	@echo "==> [1/3] Building $(DB_FILE) from $(SQL_SRC)..."
-	rm -f $(DB_FILE)
-	$(SQLITE3) -bail $(DB_FILE) < $(SQL_SRC)
-	@for f in $(DELTAS); do \
-		echo "    applying $$f"; \
-		$(SQLITE3) -bail $(DB_FILE) < $$f || exit 1; \
-	done
+$(DB_FILE): $(SQL_SRC) $(DELTAS) $(TAXONOMY) $(PY_SRC)
+	@echo "==> [1/3] Building $(DB_FILE) from $(SQL_SRC) + weekly deltas..."
+	$(MEMPLOYERS) build-db
 	@echo "==> [2/3] Enriching $(DB_FILE) with canonical skills, corridors, and analytical views..."
-	$(PYTHON) analytics.py --enrich-db
+	$(MEMPLOYERS) enrich
 
 apply-delta: ## Apply one weekly delta to the existing DB (usage: make apply-delta DELTA=weekly_delta_YYYY_MM_DD.sql)
 	@test -n "$(DELTA)" || { echo "Usage: make apply-delta DELTA=weekly_delta_YYYY_MM_DD.sql" >&2; exit 1; }
-	@test -f "$(DELTA)" || { echo "Error: delta file '$(DELTA)' not found" >&2; exit 1; }
-	@test -f "$(DB_FILE)" || { echo "Error: $(DB_FILE) not found; run 'make db' first" >&2; exit 1; }
-	@echo "==> Backing up $(DB_FILE) to $(DB_FILE).backup..."
-	cp $(DB_FILE) $(DB_FILE).backup
-	@echo "==> Applying $(DELTA) (stops on first error)..."
-	$(SQLITE3) -bail $(DB_FILE) < $(DELTA)
-	@echo "==> Checking integrity and foreign keys..."
-	@test "$$($(SQLITE3) $(DB_FILE) 'PRAGMA integrity_check;')" = "ok" || { echo "Error: integrity_check failed" >&2; exit 1; }
-	@test -z "$$($(SQLITE3) $(DB_FILE) 'PRAGMA foreign_key_check;')" || { echo "Error: foreign_key_check failed" >&2; exit 1; }
-	@echo "==> Re-enriching skill/corridor tables..."
-	$(PYTHON) analytics.py --enrich-db
-	@echo "==> Totals: $$($(SQLITE3) $(DB_FILE) 'SELECT COUNT(*) FROM companies;') companies, $$($(SQLITE3) $(DB_FILE) 'SELECT COUNT(*) FROM job_postings;') jobs"
+	$(MEMPLOYERS) apply-delta "$(DELTA)"
+	$(MEMPLOYERS) enrich
 
-bundle: $(DOCS_DB) $(DOCS_BUNDLE) ## Copy SQLite DB and generate WebAssembly/static bundle in docs/
+bundle: $(DOCS_DB) ## Copy the SQLite DB into docs/ for the in-browser app
 
-$(DOCS_DB) $(DOCS_BUNDLE): $(DB_FILE) analytics.py
-	@echo "==> [3/3] Bundling $(DOCS_DB) and $(DOCS_BUNDLE) for GitHub Pages..."
-	$(PYTHON) analytics.py --bundle-docs
+$(DOCS_DB): $(DB_FILE)
+	@echo "==> [3/3] Copying $(DB_FILE) to $(DOCS_DB) for GitHub Pages..."
+	$(MEMPLOYERS) bundle
 	touch $(DOCS_DIR)/.nojekyll
 
-verify: $(DOCS_DB) $(DOCS_BUNDLE) ## Run integrity checks on SQLite DB, skill coverage, SQL slices, and docs/ assets
+verify: $(DOCS_DB) ## Check the DB, skill coverage of active jobs, curated SQL slices, and docs/ assets
 	@echo "==> Verifying build artifacts..."
-	$(PYTHON) analytics.py --verify
+	$(MEMPLOYERS) verify
 
 serve: build ## Serve `docs/` locally with Python's static HTTP server (default PORT=8080)
 	@echo "🚀 Previewing GitHub Pages site at http://127.0.0.1:$(PORT)"
-	$(PYTHON) -m http.server $(PORT) --bind 127.0.0.1 --directory $(DOCS_DIR)
+	$(RUN) python -m http.server $(PORT) --bind 127.0.0.1 --directory $(DOCS_DIR)
 
-clean: ## Remove generated SQLite databases and compiled bundle files
+# ------------------------------------------------------------------------------
+# Code quality
+# ------------------------------------------------------------------------------
+lint: ## Lint (ruff) and check formatting
+	$(RUN) ruff check $(PY_PATHS)
+	$(RUN) ruff format --check $(PY_PATHS)
+
+format: ## Auto-format and auto-fix Python code
+	$(RUN) ruff format $(PY_PATHS)
+	$(RUN) ruff check --fix $(PY_PATHS)
+
+typecheck: ## Type-check with ty
+	$(RUN) ty check
+
+test: ## Run tests with coverage (fails below 90%); writes coverage.json for `make crap`
+	$(RUN) pytest --cov --cov-report=term --cov-report=json
+
+crap: test ## Fail if any function's CRAP score (complexity x missing coverage) exceeds 30 (runs tests first)
+	$(RUN) python tools/crap.py --coverage coverage.json
+
+ci: lint typecheck test crap build ## Everything CI runs: lint, types, tests, CRAP, then the full build
+
+clean: ## Remove generated databases and test/coverage output
 	@echo "==> Cleaning generated build artifacts..."
-	rm -f $(DB_FILE) $(DOCS_DB) $(DOCS_BUNDLE)
-	rm -rf __pycache__
+	rm -f $(DB_FILE) $(DOCS_DB) $(DB_FILE).tmp coverage.json .coverage
+	rm -rf .pytest_cache .ruff_cache
+	find . -name __pycache__ -type d -prune -not -path "./.venv/*" -exec rm -rf {} +
 
 help: ## Show available Make targets
 	@echo "MEMployers 2026 — Static GitHub Pages & SQLite WebAssembly Build System"
 	@echo ""
 	@echo "Usage:"
-	@echo "  make <target> [PORT=8080]"
+	@echo "  make <target> [PORT=8080] [DELTA=weekly_delta_YYYY_MM_DD.sql]"
 	@echo ""
 	@echo "Targets:"
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)

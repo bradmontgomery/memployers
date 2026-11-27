@@ -1,0 +1,108 @@
+# Taxonomy data loaded by the memployers package (src/memployers/taxonomy.py). Edit by hand.
+# Memphis-area corridors. A company's `sub_market_corridor` text is lower-cased and checked against
+# `overrides` first, then each corridor's `match` substrings in order; no match falls back to `default`.
+
+default = "east_memphis"
+
+[[overrides]]
+contains = "downtown & east memphis"
+corridor = "east_memphis"
+
+[[corridors]]
+id = "downtown"
+name = "Downtown Memphis & Riverfront"
+short_name = "Downtown"
+state = "TN"
+map_x = 270
+map_y = 255
+color = "#6366f1"
+match = ["downtown memphis", "123 s front", "38103", "38107", "peabody place"]
+description = "Fortune 500 & civic hub anchored by AutoZone HQ, First Horizon, Frontdoor, Shelby County, City of Memphis & MLGW."
+
+[[corridors]]
+id = "medical_midtown_uofm"
+name = "Medical District, Midtown & UofM"
+short_name = "Medical / UofM"
+state = "TN"
+map_x = 360
+map_y = 240
+color = "#ec4899"
+match = ["medical district", "midtown", "university district", "38152", "crosstown"]
+description = "Biomedical AI, HPRC supercomputing, Epic clinical IT, and academic R&D anchored by St. Jude, ALSAC, Methodist, Regional One, UTHSC & UofM."
+
+[[corridors]]
+id = "east_memphis"
+name = "East Memphis Corporate Corridor"
+short_name = "East Memphis"
+state = "TN"
+map_x = 495
+map_y = 265
+color = "#06b6d4"
+match = ["east memphis", "tournament", "humphreys", "ridgeway", "poplar", "commercial services", "38119", "38120", "downtown & east memphis"]
+description = "Enterprise headquarters and corporate IT centers: International Paper, Baptist Memorial, Hilton Tech Ctr, Sedgwick, Raymond James & Deloitte."
+
+[[corridors]]
+id = "collierville_hackscross"
+name = "Collierville & Hacks Cross Tech Corridor"
+short_name = "Collierville / Hacks Cross"
+state = "TN"
+map_x = 665
+map_y = 335
+color = "#f59e0b"
+match = ["collierville", "hacks cross"]
+description = "Global logistics and enterprise hardware/retail engineering hub anchored by FedEx World Tech Center, Orgill HQ, Helena Agri & Mueller Industries."
+
+[[corridors]]
+id = "cordova_germantown_bartlett"
+name = "Germantown, Cordova, Bartlett & Lakeland"
+short_name = "Germantown / Cordova / NE"
+state = "TN"
+map_x = 585
+map_y = 190
+color = "#a855f7"
+match = ["germantown", "cordova", "bartlett", "lakeland", "arlington", "38133", "38016", "38018"]
+description = "Suburban REIT headquarters and surgical robotics/medtech corridor: MAA HQ, Smith+Nephew Digital Surgery, Stryker, Kele, Transnetyx & Olympus."
+
+[[corridors]]
+id = "south_metro_xai_desoto"
+name = "South Metro & North MS (xAI / DeSoto / Byhalia)"
+short_name = "South Metro / DeSoto MS"
+state = "TN/MS"
+map_x = 395
+map_y = 395
+color = "#10b981"
+match = ["south metro", "southaven", "desoto", "olive branch", "byhalia", "horn lake", "marshall county"]
+description = "Home to the xAI Colossus Supercluster & SpaceX operations plus high-automation logistics/manufacturing across Southaven, Olive Branch & Byhalia."
+
+[[corridors]]
+id = "south_memphis_airport_irs"
+name = "Airport Industrial & IRS Computing Hub"
+short_name = "Airport / IRS Hub"
+state = "TN"
+map_x = 355
+map_y = 325
+color = "#14b8a6"
+match = ["airport", "38118", "38106", "airways"]
+description = "Federal computing, medtech manufacturing, and freight hub including the IRS Enterprise Computing Center, Medtronic & Barnhart Crane."
+
+[[corridors]]
+id = "north_metro_millington"
+name = "North Metro & Millington Defense (NSA Mid-South)"
+short_name = "Millington / NSA Mid-South"
+state = "TN"
+map_x = 420
+map_y = 110
+color = "#3b82f6"
+match = ["millington", "38053", "38127", "frayser", "north memphis", "mid-south"]
+description = "Defense IT, federal personnel systems, and regional fiber telecom anchored by U.S. Navy CNIC HQ, Leidos, Peraton & Ritter RightFiber."
+
+[[corridors]]
+id = "regional_megaprojects"
+name = "West Memphis (Google) & BlueOval City (Ford)"
+short_name = "West Memphis & BlueOval"
+state = "AR/TN"
+map_x = 155
+map_y = 215
+color = "#f43f5e"
+match = ["west memphis", "crittenden", "stanton", "blueoval", "haywood"]
+description = "Multi-billion-dollar regional megasites: Google's West Memphis AR hyperscale data center campus and Ford's BlueOval City EV truck complex in Stanton, TN."

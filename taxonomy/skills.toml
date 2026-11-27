@@ -1,0 +1,641 @@
+# Taxonomy data loaded by the memployers package (src/memployers/taxonomy.py). Edit by hand.
+# Skill categories (display order) and the canonical skills matched in job titles and tech-stack tags.
+# Patterns are Python regexes, matched against lower-cased text. Use 'literal strings' so backslashes survive.
+
+[[categories]]
+name = "Languages & Frameworks"
+color = "#6366f1"
+bg = "rgba(99, 102, 241, 0.14)"
+icon = "code"
+description = "Core software engineering languages, web frameworks, and systems programming."
+
+[[categories]]
+name = "AI, Data & Analytics"
+color = "#ec4899"
+bg = "rgba(236, 72, 153, 0.14)"
+icon = "sparkles"
+description = "Large language models, agentic AI, machine learning, data engineering, and BI."
+
+[[categories]]
+name = "Cloud, DevOps & Hyperscale"
+color = "#06b6d4"
+bg = "rgba(6, 182, 212, 0.14)"
+icon = "cloud"
+description = "Hyperscale GPU clusters, cloud providers, Kubernetes, IaC, and SRE observability."
+
+[[categories]]
+name = "Enterprise & Industry Platforms"
+color = "#f59e0b"
+bg = "rgba(245, 158, 11, 0.14)"
+icon = "layers"
+description = "Healthcare EHR (Epic), ERP (SAP/Oracle), CRM (Salesforce), ServiceNow, and WMS."
+
+[[categories]]
+name = "Cybersecurity, Network & OT"
+color = "#10b981"
+bg = "rgba(16, 185, 129, 0.14)"
+icon = "shield"
+description = "SOC defense, IAM, GRC/audit, enterprise routing/F5, and industrial OT/robotics."
+
+[[categories]]
+name = "IT Leadership, Ops & Support"
+color = "#a855f7"
+bg = "rgba(168, 85, 247, 0.14)"
+icon = "users"
+description = "Engineering management, Agile PMO, systems administration, and technical support."
+
+[[skills]]
+id = "python"
+name = "Python"
+category = "Languages & Frameworks"
+keywords = ["Python", "PyTorch", "Pandas", "FastAPI"]
+patterns = [
+  '\bpython\b',
+]
+
+[[skills]]
+id = "java_spring"
+name = "Java & Spring Boot"
+category = "Languages & Frameworks"
+keywords = ["Java", "Spring Boot", "Spring WebFlux", "JSP", "Scala"]
+patterns = [
+  '\bjava\b',
+  '\bspring\s*boot\b',
+  '\bspring\s*webflux\b',
+  '\bjsp\b',
+  '\bscala\b',
+]
+
+[[skills]]
+id = "csharp_dotnet"
+name = "C# & .NET Core"
+category = "Languages & Frameworks"
+keywords = ["C#", ".NET Core", "ASP.NET", ".NET 6+", ".NET Framework"]
+patterns = [
+  '\bc#',
+  '\.net\b',
+  'asp\.net',
+  'c#\.net',
+]
+
+[[skills]]
+id = "js_ts_node"
+name = "JavaScript, TypeScript & Node"
+category = "Languages & Frameworks"
+keywords = ["JavaScript", "TypeScript", "Node.js", "HTML/CSS", "PHP"]
+patterns = [
+  '\bjavascript\b',
+  '\btypescript\b',
+  '\bnode\.?js\b',
+  '\bhtml/css\b',
+  '\bphp\b',
+]
+
+[[skills]]
+id = "react_nextjs"
+name = "React & Next.js"
+category = "Languages & Frameworks"
+keywords = ["React", "Next.js", "Frontend"]
+patterns = [
+  '\breact\b',
+  '\bnext\.?js\b',
+]
+
+[[skills]]
+id = "angular"
+name = "Angular"
+category = "Languages & Frameworks"
+keywords = ["Angular", "Angular v10+", "SPA"]
+patterns = [
+  '\bangular\b',
+]
+
+[[skills]]
+id = "systems_rust_go_cpp"
+name = "Rust, Go & Embedded C/C++"
+category = "Languages & Frameworks"
+keywords = ["Rust", "Go", "C/C++", "RTOS", "ARM", "Embedded IoT"]
+patterns = [
+  '\brust\b',
+  '\bgo\b',
+  'python/go',
+  'go/python',
+  'c\+\+',
+  '\bembedded\b',
+  '\brtos\b',
+  '\barm\s+micro',
+  '\bble\b',
+]
+
+[[skills]]
+id = "apis_microservices"
+name = "REST APIs, GraphQL & Microservices"
+category = "Languages & Frameworks"
+keywords = ["REST APIs", "GraphQL", "Microservices", "Full-Stack", "Backend"]
+patterns = [
+  '\brest\b',
+  '\brestful\b',
+  '\bgraphql\b',
+  '\bmicroservices\b',
+  '\bwebhooks\b',
+  '\bapis\b',
+  '\bsoap\b',
+  '\bfull[- ]stack\b',
+  '\bbackend\b',
+]
+
+[[skills]]
+id = "llms_agentic_ai"
+name = "LLMs & Agentic AI"
+category = "AI, Data & Analytics"
+keywords = ["LLMs", "Agentic AI", "Claude Code", "RAG", "MCP", "OpenAI"]
+patterns = [
+  '\bllms?\b',
+  '\bagentic\s+ai\b',
+  '\bclaude\s+code\b',
+  '\brag\b',
+  '\bnlp\b',
+  '\bopenai\b',
+  '\bmcp\s+protocol',
+  '\bagent\s+orchestration\b',
+  '\bai[- ]assisted\b',
+  '\bai\s+strategy\b',
+  '\bai\s+implementation\b',
+  '\bai\s+architect',
+  '\bfoundation\s+models\b',
+  '\bapplied\s+ai\b',
+]
+
+[[skills]]
+id = "ml_data_science"
+name = "Machine Learning, MLOps & AI"
+category = "AI, Data & Analytics"
+keywords = ["Machine Learning", "MLOps", "Data Science", "Bioimage AI", "Quantum"]
+patterns = [
+  '\bmachine\s+learning\b',
+  '\bmlops\b',
+  '\btensorflow\b',
+  '\bedge\s+ai\b',
+  '\bpredictive\b',
+  '\bbioimage\b',
+  '\bstatistical\s+modeling\b',
+  '\bquantum\b',
+  '\bdata\s+scien',
+  '\bneuromorphic\b',
+]
+
+[[skills]]
+id = "sql_databases"
+name = "SQL & Relational Databases"
+category = "AI, Data & Analytics"
+keywords = ["SQL", "SQL Server", "PostgreSQL", "MySQL", "T-SQL", "Cosmos DB"]
+patterns = [
+  '\bsql\b',
+  '\bt-sql\b',
+  '\bpostgresql\b',
+  '\bmysql\b',
+  '\bcosmos\s*db\b',
+  '\bdatabases?\b',
+]
+
+[[skills]]
+id = "data_eng_kafka_spark"
+name = "Data Engineering, Kafka & Spark"
+category = "AI, Data & Analytics"
+keywords = ["Kafka", "Apache Spark", "ETL", "Elasticsearch", "Data Pipelines"]
+patterns = [
+  '\bkafka\b',
+  '\bspark\b',
+  '\bdataproc\b',
+  '\bdataflow\b',
+  '\betl\b',
+  '\bdata\s+engineering\b',
+  '\bevent-driven\b',
+  '\belasticsearch\b',
+  '\bgenomics\b',
+  '\bdata\s+infrastructure\b',
+  '\bhigh-performance\s+storage\b',
+]
+
+[[skills]]
+id = "bi_analytics_governance"
+name = "Power BI, Tableau & Data Governance"
+category = "AI, Data & Analytics"
+keywords = ["Power BI", "Tableau", "Alteryx", "SSRS", "Data Governance"]
+patterns = [
+  '\bpower\s*bi\b',
+  '\btableau\b',
+  '\balteryx\b',
+  '\bssrs\b',
+  '\bcrystal\s+reports\b',
+  '\bdata\s+governance\b',
+  '\bdecision\s+analytics\b',
+  '\bbi\b',
+  '\bdata\s+strategy\b',
+]
+
+[[skills]]
+id = "cloud_azure"
+name = "Microsoft Azure"
+category = "Cloud, DevOps & Hyperscale"
+keywords = ["Azure", "AKS", "Azure DevOps", "Azure Virtual Desktop", "Bicep"]
+patterns = [
+  '\bazure\b',
+  '\baks\b',
+  '\bavd\b',
+  '\bbicep\b',
+]
+
+[[skills]]
+id = "cloud_gcp"
+name = "Google Cloud (GCP)"
+category = "Cloud, DevOps & Hyperscale"
+keywords = ["GCP", "Dataproc", "Dataflow", "GCP IAM"]
+patterns = [
+  '\bgcp\b',
+  '\bgoogle\s+cloud\b',
+]
+
+[[skills]]
+id = "cloud_aws"
+name = "Amazon Web Services (AWS)"
+category = "Cloud, DevOps & Hyperscale"
+keywords = ["AWS", "Multi-Cloud", "Cloud Services"]
+patterns = [
+  '\baws\b',
+  '\bamazon\s+web\s+services\b',
+]
+
+[[skills]]
+id = "kubernetes_containers"
+name = "Kubernetes & Containers"
+category = "Cloud, DevOps & Hyperscale"
+keywords = ["Kubernetes", "Docker", "Helm", "AKS", "Rancher", "Containers"]
+patterns = [
+  '\bkubernetes\b',
+  '\bk8s\b',
+  '\bdocker\b',
+  '\bhelm\b',
+  '\brancher\b',
+  '\bkustomize\b',
+  '\baks\b',
+  '\bcontainer\b',
+]
+
+[[skills]]
+id = "terraform_iac_cicd"
+name = "Terraform, GitOps & CI/CD"
+category = "Cloud, DevOps & Hyperscale"
+keywords = ["Terraform", "ArgoCD", "Crossplane", "Ansible", "CI/CD", "GitOps"]
+patterns = [
+  '\bterraform\b',
+  '\bcrossplane\b',
+  '\bargocd\b',
+  '\bflux\b',
+  '\bansible\b',
+  '\bgitops\b',
+  '\bgithub\s+actions\b',
+  '\bci/cd\b',
+  '\biac\b',
+  '\binfrastructure-as-code\b',
+]
+
+[[skills]]
+id = "linux_supercompute_dc"
+name = "Linux, Bare-Metal GPU & Data Centers"
+category = "Cloud, DevOps & Hyperscale"
+keywords = ["Linux", "Bare-Metal GPU", "Supercompute", "Hyperscale Data Center", "HPRC"]
+patterns = [
+  '\blinux\b',
+  '\brhel\b',
+  '\bbare-metal\b',
+  '\bgpu\s+cluster',
+  '\bgpu\s+server',
+  '\bsupercomput',
+  '\bhprc\b',
+  '\bhigh\s+performance\s+(research\s+)?computing\b',
+  '\bresearch\s+computing\b',
+  '\bhyperscale\b',
+  '\bserver\s+hardware\b',
+  '\bdata\s+center\s+operations\b',
+  '\bdata\s+center\s+tech',
+]
+
+[[skills]]
+id = "cloud_platform_eng"
+name = "Cloud & Platform Engineering"
+category = "Cloud, DevOps & Hyperscale"
+keywords = ["Platform Engineering", "Cloud Infrastructure", "Cloud Operations", "Multi-Cloud"]
+patterns = [
+  '\bcloud\s+infrastructure\b',
+  '\bplatform\s+engineering\b',
+  '\bcloud\s+operations\b',
+  '\bcloud\s+services\b',
+  '\bcloud\s+applications\b',
+  '\bcloud\s+engineer\b',
+  '\bmulti-cloud\b',
+  '\bcloud\s+computing\b',
+]
+
+[[skills]]
+id = "sre_observability"
+name = "SRE & Observability (Grafana / Splunk)"
+category = "Cloud, DevOps & Hyperscale"
+keywords = ["SRE", "Grafana", "Prometheus", "Splunk", "Telemetry", "New Relic"]
+patterns = [
+  '\bsre\b',
+  '\bsite\s+reliability\b',
+  '\bgrafana\b',
+  '\bprometheus\b',
+  '\bsplunk\b',
+  '\bnew\s+relic\b',
+  '\btelemetry\b',
+  '\bobservability\b',
+  '\bperformance\s+monitoring\b',
+]
+
+[[skills]]
+id = "epic_clinical_it"
+name = "Epic EHR & Clinical Healthcare IT"
+category = "Enterprise & Industry Platforms"
+keywords = ["Epic Systems", "Baptist OneCare", "HL7", "DICOM", "Allscripts", "Clinical IT"]
+patterns = [
+  '\bepic\b',
+  '\bonecare\b',
+  '\bclinical\b',
+  '\behr\b',
+  '\ballscripts\b',
+  '\bcarelogistics\b',
+  '\bhl7\b',
+  '\bdicom\b',
+  '\bhealthcare\s+it\b',
+  '\bhealthcare\s+information\b',
+]
+
+[[skills]]
+id = "sap_erp"
+name = "SAP (ABAP / BTP / S4HANA) & ERP"
+category = "Enterprise & Industry Platforms"
+keywords = ["SAP ABAP", "SAP BTP", "S/4HANA", "SAP Fiori", "Infor LN", "ERP"]
+patterns = [
+  '\bsap\b',
+  '\babap\b',
+  '\bfiori\b',
+  '\bs/4hana\b',
+  '\bariba\b',
+  '\binfor\s+ln\b',
+  '\berp\b',
+]
+
+[[skills]]
+id = "oracle_plsql"
+name = "Oracle ERP, Cloud & PL/SQL"
+category = "Enterprise & Industry Platforms"
+keywords = ["Oracle ERP", "PL/SQL", "Oracle Cloud", "Oracle WMS", "Oracle HCM"]
+patterns = [
+  '\boracle\b',
+  '\bpl/sql\b',
+  '\bpl-sql\b',
+]
+
+[[skills]]
+id = "salesforce_crm"
+name = "Salesforce, Data Cloud & Apex"
+category = "Enterprise & Industry Platforms"
+keywords = ["Salesforce", "Salesforce Data Cloud", "Apex", "CRM"]
+patterns = [
+  '\bsalesforce\b',
+  '\bapex\b',
+]
+
+[[skills]]
+id = "servicenow_itsm"
+name = "ServiceNow & ITSM"
+category = "Enterprise & Industry Platforms"
+keywords = ["ServiceNow", "Flow Designer", "Service Catalog", "ITSM"]
+patterns = [
+  '\bservicenow\b',
+  '\bflow\s+designer\b',
+  '\bchange\s+management\b',
+  '\bit\s+service\s+delivery\b',
+]
+
+[[skills]]
+id = "wms_supply_chain"
+name = "WMS & Supply Chain Logistics Systems"
+category = "Enterprise & Industry Platforms"
+keywords = ["WMS", "Supply Chain IT", "LogFire", "EDI", "Logistics Microservices"]
+patterns = [
+  '\bwms\b',
+  '\bwarehouse\s+management\b',
+  '\blogfire\b',
+  '\bedi\b',
+  '\bsupply\s+chain\b',
+  '\blogistics\b',
+  '\bmhe\b',
+  '\btelematics\b',
+]
+
+[[skills]]
+id = "workday_collab_cms"
+name = "Workday, SharePoint, AEM & Atlassian"
+category = "Enterprise & Industry Platforms"
+keywords = ["Workday", "SharePoint", "Adobe AEM", "Jira/Confluence", "OnBase"]
+patterns = [
+  '\bworkday\b',
+  '\bsharepoint\b',
+  '\badobe\s+experience\b',
+  '\baem\b',
+  '\bonbase\b',
+  '\bnintex\b',
+  '\bjira\b',
+  '\bconfluence\b',
+  '\batlassian\b',
+  '\bcms\b',
+  '\bpowerschool\b',
+]
+
+[[skills]]
+id = "cyber_soc_siem"
+name = "Cybersecurity, SOC & SIEM/EDR"
+category = "Cybersecurity, Network & OT"
+keywords = ["SOC", "SIEM", "EDR", "Incident Response", "Cloud Security", "CyberSecOps"]
+patterns = [
+  '\bsiem\b',
+  '\bedr\b',
+  '\bids/ips\b',
+  '\bsoc\b',
+  '\bcyber\b',
+  '\bincident\s+response\b',
+  '\binfosec\b',
+  '\binformation\s+security\b',
+  '\binfrastructure\s+security\b',
+  '\bcloud\s+security\b',
+  '\bsecurity\s+operations\b',
+  '\bsecurity\s+controls\b',
+]
+
+[[skills]]
+id = "iam_identity"
+name = "IAM, Ping Identity & Zero Trust"
+category = "Cybersecurity, Network & OT"
+keywords = ["IAM", "Ping Identity", "OAuth 2.0", "SAML", "Active Directory"]
+patterns = [
+  '\biam\b',
+  '\bping\s*identity\b',
+  '\bpingfederate\b',
+  '\boauth\b',
+  '\bsaml\b',
+  '\bactive\s+directory\b',
+  '\baccess\s+control\b',
+  '\bkyverno\b',
+  '\bopa\b',
+]
+
+[[skills]]
+id = "grc_audit_compliance"
+name = "IT Audit, GRC, HIPAA & Clearance"
+category = "Cybersecurity, Network & OT"
+keywords = ["IT Audit", "COBIT", "BCDR", "HIPAA", "Security Clearance", "GRC"]
+patterns = [
+  '\bit\s+audit\b',
+  '\bauditor\b',
+  '\bcobit\b',
+  '\bbcdr\b',
+  '\bdisaster\s+recovery\b',
+  '\bhipaa\b',
+  '\b21\s+cfr\b',
+  '\briskonnect\b',
+  '\bclearance\b',
+  '\bit\s+governance\b',
+  '\bregulatory\s+compliance\b',
+  '\brisk\s+frameworks\b',
+]
+
+[[skills]]
+id = "networking_cisco_f5"
+name = "Enterprise Networking, Cisco & F5"
+category = "Cybersecurity, Network & OT"
+keywords = ["Routing/Switching", "Cisco", "F5 BIG-IP", "Network Architecture", "Fiber/Optical"]
+patterns = [
+  '\brouting/switching\b',
+  '\bcisco\b',
+  '\bf5\b',
+  '\bload\s+balanc',
+  '\bnetwork\s+architect',
+  '\bnetwork\s+engineer',
+  '\bnetwork\s+admin',
+  '\bnetwork\s+security\b',
+  '\bnetwork\s+support\b',
+  '\boptical\s+fabrics\b',
+  '\bfiber\b',
+  '\blan/network\+',
+  '\bsdn\b',
+  '\bsoftware-defined\s+networking\b',
+  '\bip\s+telephony\b',
+  '\bvoip\b',
+  '\bvoice\s+network',
+  '\bunified\s+communications\b',
+  '\btelecom\b',
+]
+
+[[skills]]
+id = "ot_scada_plc_robotics"
+name = "OT, SCADA, PLC & Robotics Automation"
+category = "Cybersecurity, Network & OT"
+keywords = ["OT Systems", "SCADA", "Siemens PLC", "Robotics", "IIoT", "Smart Manufacturing"]
+patterns = [
+  '\boperational\s+technology\b',
+  '\bot\s+network',
+  '\bot\s+systems',
+  '\bscada\b',
+  '\bplc\b',
+  '\bsiemens\b',
+  '\brobotics\b',
+  '\biiot\b',
+  '\bsmart\s+manufacturing\b',
+  '\bsmart\s+grid\b',
+  '\bindustrial\s+controls\b',
+  '\bworkflow\s+automation\b',
+  '\bdigital\s+surgery\b',
+  '\bautomated\s+test\s+(systems?|software|equipment)\b',
+  '\bfixture\s+validation\b',
+]
+
+[[skills]]
+id = "tech_leadership_arch"
+name = "Tech Leadership & Enterprise Architecture"
+category = "IT Leadership, Ops & Support"
+keywords = ["Engineering Mgmt", "Enterprise Architecture", "IT Director", "Tech Strategy"]
+patterns = [
+  '\btechnical\s+leadership\b',
+  '\bengineering\s+management\b',
+  '\bsoftware\s+leadership\b',
+  '\bdevelopment\s+leadership\b',
+  '\benterprise\s+architecture\b',
+  '\bsolution\s+architecture\b',
+  '\breference\s+architecture\b',
+  '\btechnology\s+roadmap\b',
+  '\bbusiness\s+relationship\b',
+  '\bvendor\s+mgmt\b',
+  '\bdirector\b',
+  '\bit\s+manager\b',
+  '\bsystem\s+director\b',
+  '\bmanager\s+it\b',
+]
+
+[[skills]]
+id = "agile_pmo_ba"
+name = "Agile Delivery, IT PMO & Systems Analysis"
+category = "IT Leadership, Ops & Support"
+keywords = ["Agile", "IT PMO", "Systems Analysis", "Business Analysis", "Product Mgmt"]
+patterns = [
+  '\bagile\b',
+  '\bpmo\b',
+  '\bproject\s+management\b',
+  '\bprogram\s+management\b',
+  '\bproduct\s+management\b',
+  '\bbusiness\s+analys',
+  '\bsystems\s+analys',
+  '\brequirements\b',
+]
+
+[[skills]]
+id = "sysadmin_windows_virtualization"
+name = "Windows Server, Virtualization & NOC"
+category = "IT Leadership, Ops & Support"
+keywords = ["Windows Server", "Virtualization", "PowerShell", "NOC", "Storage Admin"]
+patterns = [
+  '\bwindows\s+server\b',
+  '\bsystems\s+administration\b',
+  '\bpowershell\b',
+  '\bstorage\s+administration\b',
+  '\bstorage\s+services\b',
+  '\bnoc\b',
+  '\bvirtualization\b',
+  '\bnonstop\b',
+  '\bmicrosoft\s+365\b',
+]
+
+[[skills]]
+id = "desktop_field_support"
+name = "Desktop, Field & Help Desk IT Support"
+category = "IT Leadership, Ops & Support"
+keywords = ["Help Desk", "Desktop Support", "Field Tech", "Imaging", "Service Desk"]
+patterns = [
+  '\bhelp\s+desk\b',
+  '\bdesktop\s+support\b',
+  '\bdeskside\b',
+  '\bl2\s+technical\b',
+  '\btier\s+1\b',
+  '\bcomputer\s+imaging\b',
+  '\bworkstation',
+  '\brf\s+scanners\b',
+  '\bperipherals\b',
+  '\basset\s+inventory\b',
+  '\bservice\s+desk\b',
+  '\btech\s+support\b',
+  '\bsupport\s+ticket\b',
+  '\bhardware\s+support\b',
+  '\bpos\s+systems?\b',
+]

@@ -8,3 +8,10 @@ venv/
 
 # Local DB backups written by `make apply-delta`
 *.backup
+
+# Test & coverage output
+.coverage
+coverage.json
+.pytest_cache/
+.ruff_cache/
+*.db.tmp

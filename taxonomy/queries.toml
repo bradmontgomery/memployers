@@ -1,0 +1,234 @@
+# Taxonomy data loaded by the memployers package (src/memployers/taxonomy.py). Edit by hand.
+# Curated SQL slices shown in the site's SQL workbench, in display order.
+
+[[queries]]
+id = "skill_demand_matrix"
+title = "Top Skills by Hiring Demand & Pay Premium"
+category = "Skills & Stack"
+description = "Ranks canonical technical skills across Greater Memphis by verified 2026 job postings, total hiring companies, and average advertised midpoint salary."
+sql = '''
+SELECT
+    skill_name AS "Skill / Domain",
+    skill_category AS "Category",
+    verified_job_postings AS "Verified Roles",
+    hiring_companies_total AS "Hiring Employers",
+    CASE WHEN avg_midpoint_salary_usd IS NOT NULL
+         THEN '$' || printf('%,d', CAST(avg_midpoint_salary_usd AS INT))
+         ELSE 'Unlisted' END AS "Avg Mid Salary",
+    hiring_employers AS "Sample Memphis Employers"
+FROM v_skill_demand
+WHERE verified_job_postings > 0
+ORDER BY verified_job_postings DESC, hiring_companies_total DESC
+LIMIT 25;'''
+
+[[queries]]
+id = "company_leaderboard"
+title = "Top Memphis Tech Employers Leaderboard"
+category = "Employers"
+description = "Combines verified primary IT postings, estimated local tech roles, and total company-wide 2026 open requisitions."
+sql = '''
+SELECT
+    company_name AS "Employer",
+    sector AS "Industry Sector",
+    sub_market_corridor AS "Memphis Corridor",
+    cataloged_primary_roles AS "Verified IT Roles",
+    local_tech_roles_est AS "Est. Local Tech Roles",
+    total_company_open_roles_2026 AS "Total 2026 Openings",
+    CASE WHEN avg_advertised_mid_usd IS NOT NULL
+         THEN '$' || printf('%,d', CAST(avg_advertised_mid_usd AS INT))
+         ELSE 'N/A' END AS "Avg Advertised Pay",
+    ats_platform AS "ATS Platform"
+FROM v_company_leaderboard
+WHERE is_watchlist_only = 0
+ORDER BY local_tech_roles_est DESC, cataloged_primary_roles DESC
+LIMIT 25;'''
+
+[[queries]]
+id = "ai_supercompute_roles"
+title = "AI, Agentic Coding & Supercompute Roles"
+category = "Skills & Stack"
+description = "Surfaces Memphis roles involving LLMs, Agentic AI (Claude Code), RAG, MLOps, Quantum, or GPU Supercomputing."
+sql = '''
+SELECT
+    company_name AS "Company",
+    job_title AS "Role Title",
+    role_classification AS "Classification",
+    work_mode AS "Work Mode",
+    COALESCE(raw_compensation, 'Not Disclosed') AS "Advertised Pay",
+    tech_stack_tags AS "AI / Compute Stack"
+FROM v_jobs_enriched
+WHERE is_active = 1
+  AND (tech_stack_tags LIKE '%AI%'
+   OR tech_stack_tags LIKE '%LLM%'
+   OR tech_stack_tags LIKE '%GPU%'
+   OR tech_stack_tags LIKE '%Supercomput%'
+   OR tech_stack_tags LIKE '%Machine Learning%'
+   OR tech_stack_tags LIKE '%Quantum%')
+ORDER BY COALESCE(annual_mid_usd, 0) DESC, company_name ASC;'''
+
+[[queries]]
+id = "salary_by_classification"
+title = "Role Classification & Compensation Breakdown"
+category = "Compensation"
+description = "Built-in analytical view `v_salary_by_classification` showing volume share and salary bands across the 6 primary IT job families."
+sql = '''
+SELECT
+    role_classification AS "Role Classification",
+    total_postings AS "Total Roles",
+    pct_of_total_jobs || '%' AS "Share of Market",
+    postings_with_pay_data AS "Roles w/ Pay",
+    '$' || printf('%,d', CAST(lowest_advertised_usd AS INT)) AS "Min Pay",
+    '$' || printf('%,d', CAST(avg_midpoint_usd AS INT)) AS "Avg Midpoint",
+    '$' || printf('%,d', CAST(highest_advertised_usd AS INT)) AS "Max Pay"
+FROM v_salary_by_classification;'''
+
+[[queries]]
+id = "top_paying_postings"
+title = "Highest-Paying Verified IT Roles ($120K+ Midpoint)"
+category = "Compensation"
+description = "Lists all Memphis IT postings advertising a midpoint compensation of $120,000/yr or higher, sorted by maximum advertised pay."
+sql = '''
+SELECT
+    company_name AS "Company",
+    job_title AS "Job Title",
+    seniority_level AS "Seniority",
+    work_mode AS "Work Mode",
+    raw_compensation AS "Advertised Pay",
+    '$' || printf('%,d', CAST(annual_mid_usd AS INT)) AS "Annual Midpoint",
+    tech_stack_tags AS "Key Skills"
+FROM v_jobs_enriched
+WHERE is_active = 1 AND annual_mid_usd >= 120000
+ORDER BY annual_max_usd DESC, annual_mid_usd DESC;'''
+
+[[queries]]
+id = "residency_radius_policies"
+title = "50-Mile Hybrid Radius & Residency Mandates"
+category = "Work Mode & Geo"
+description = "Surfaces employers enforcing geographic residency mandates (City of Memphis / MLGW 6-month Shelby Co. rule, FedEx 50-mile campus radius, or clearance rules)."
+sql = '''
+SELECT
+    company_name AS "Company",
+    job_title AS "Job Title",
+    work_mode AS "Work Mode",
+    city || ', ' || state AS "Location",
+    residency_or_radius_rule AS "Residency / Radius / Onsite Policy"
+FROM v_jobs_enriched
+WHERE is_active = 1
+  AND (residency_or_radius_rule LIKE '%50%'
+   OR residency_or_radius_rule LIKE '%residency%'
+   OR residency_or_radius_rule LIKE '%Clearance%'
+   OR residency_or_radius_rule LIKE '%Suitability%'
+   OR residency_or_radius_rule LIKE '%3 days%'
+   OR residency_or_radius_rule LIKE '%quarter%')
+ORDER BY company_name, work_mode;'''
+
+[[queries]]
+id = "corridor_workmode_matrix"
+title = "Sub-Market Corridor vs. Work Mode Matrix"
+category = "Work Mode & Geo"
+description = "Analytical view `v_corridor_workmode_matrix` comparing On-site, Hybrid, and Remote distributions and average salaries across Memphis sub-markets."
+sql = '''
+SELECT
+    sub_market_corridor AS "Sub-Market Corridor",
+    total_cataloged_roles AS "Total Roles",
+    onsite_roles AS "On-site",
+    hybrid_roles AS "Hybrid",
+    remote_roles AS "Remote",
+    CASE WHEN avg_corridor_mid_salary_usd IS NOT NULL
+         THEN '$' || printf('%,d', CAST(avg_corridor_mid_salary_usd AS INT))
+         ELSE 'Unlisted' END AS "Avg Midpoint Pay"
+FROM v_corridor_workmode_matrix
+WHERE total_cataloged_roles >= 2
+ORDER BY total_cataloged_roles DESC;'''
+
+[[queries]]
+id = "healthcare_medtech_stack"
+title = "Healthcare, Biomedical & Surgical Robotics Tech Stack"
+category = "Sector Deep-Dives"
+description = "Analyzes clinical IT (Epic, HL7/DICOM), genomics (Rust, HPRC), and surgical robotics (C++, Python, Cloud Imaging) across Memphis medical employers."
+sql = '''
+SELECT
+    company_name AS "Medical / MedTech Employer",
+    sector AS "Sub-Sector",
+    job_title AS "Role Title",
+    work_mode AS "Work Mode",
+    COALESCE(raw_compensation, 'Unlisted') AS "Compensation",
+    tech_stack_tags AS "Clinical / Research / Robotics Stack"
+FROM v_jobs_enriched
+WHERE is_active = 1
+  AND (sector LIKE '%Health%'
+   OR sector LIKE '%Medical%'
+   OR sector LIKE '%Biomed%'
+   OR sector LIKE '%Biotech%'
+   OR sector LIKE '%Fundraising%')
+ORDER BY company_name, job_id;'''
+
+[[queries]]
+id = "ats_hunting_strategy"
+title = "ATS Platform Breakdown for Job Seekers"
+category = "Employers"
+description = "Groups Memphis employers by Applicant Tracking System (Workday, Oracle Cloud HCM, Greenhouse, UltiPro) to help candidates target portal alerts."
+sql = '''
+SELECT
+    COALESCE(ats_platform, 'Custom / Direct') AS "ATS Platform",
+    COUNT(*) AS "Employer Count",
+    SUM(local_tech_roles_est) AS "Est. Local Tech Roles",
+    SUM(total_company_open_roles_2026) AS "Total 2026 Company Roles",
+    GROUP_CONCAT(company_name, ', ') AS "Employers Using Platform"
+FROM companies
+GROUP BY ats_platform
+ORDER BY SUM(local_tech_roles_est) DESC, COUNT(*) DESC;'''
+
+[[queries]]
+id = "early_career_pipeline"
+title = "Entry-Level, Early Career & Student Tech Pipeline"
+category = "Career Level"
+description = "Identifies entry-level, junior, student (UMRF Ventures / UTHSC), and early-mid roles ideal for new graduates and career transitioners."
+sql = '''
+SELECT
+    company_name AS "Company",
+    job_title AS "Role Title",
+    role_classification AS "Category",
+    seniority_level AS "Seniority",
+    city || ', ' || state AS "Location",
+    COALESCE(raw_compensation, 'Unlisted') AS "Pay",
+    tech_stack_tags AS "Skills Needed"
+FROM v_jobs_enriched
+WHERE is_active = 1
+  AND (seniority_level LIKE '%Entry%'
+   OR seniority_level LIKE '%Junior%'
+   OR seniority_level LIKE '%Student%'
+   OR seniority_level = 'Mid-Level')
+ORDER BY seniority_level ASC, company_name ASC;'''
+
+[[queries]]
+id = "watchlist_growth_employers"
+title = "2026 Watchlist & High-Growth Startups"
+category = "Employers"
+description = "Inspects watchlist enterprises (Nike, Sylvamo, Mueller Industries, McKesson) and local AI startups (MedHaul, Visalaw.ai, Neural Nexus, Optura AI)."
+sql = '''
+SELECT
+    company_name AS "Watchlist Employer / Startup",
+    sector AS "Sector",
+    sub_market_corridor AS "Corridor",
+    total_company_open_roles_2026 AS "2026 Open Roles",
+    notes AS "Hiring & Stack Intelligence Notes"
+FROM companies
+WHERE is_watchlist_only = 1
+ORDER BY total_company_open_roles_2026 DESC;'''
+
+[[queries]]
+id = "benchmarks_2026"
+title = "2026 Memphis Salary Benchmarks (Robert Half / Built In)"
+category = "Compensation"
+description = "Displays reference salary benchmarks for Greater Memphis IT roles from Executive (CIO/CISO) to Core Infrastructure."
+sql = '''
+SELECT
+    role_title AS "Benchmark Role",
+    tier_category AS "Tier Category",
+    '$' || printf('%,d', CAST(low_usd AS INT)) AS "25th Pct (Low)",
+    '$' || printf('%,d', CAST(mid_usd AS INT)) AS "50th Pct (Midpoint)",
+    '$' || printf('%,d', CAST(high_usd AS INT)) AS "75th+ Pct (High)",
+    benchmark_source AS "Source"
+FROM salary_benchmarks_2026
+ORDER BY mid_usd DESC;'''

@@ -10,25 +10,42 @@ The primary goal is to let job candidates, career transitioners, and analysts un
 
 ## 🛠️ Build & Local Preview (`Makefile`)
 
-All database compilation, skill taxonomy enrichment, static bundling, verification, and local preview steps are managed by the `Makefile`:
+**Prerequisites:** [uv](https://docs.astral.sh/uv/). It installs Python 3.12 and the dev tools on first use; no `sqlite3` CLI is needed.
 
 ```bash
-# Full build: rebuild SQLite DB from .sql, enrich skill tables/views, bundle into docs/, and verify
-make build
-
-# Preview the `docs/` site locally at http://127.0.0.1:8080
-make serve
-
-# Other individual targets
-make db       # Rebuild memphis_it_jobs_2026.db from memphis_it_jobs_2026.sql + all weekly_delta_*.sql (in date order) + enrich via analytics.py
-make apply-delta DELTA=weekly_delta_YYYY_MM_DD.sql
-              # Apply one weekly delta to the existing .db: backs up to .db.backup, runs sqlite3 -bail,
-              # checks integrity/foreign keys, re-enriches skill tables, prints totals
-make bundle   # Copy .db to docs/memphis_it_jobs_2026.db and generate docs/db_bundle.js + docs/.nojekyll
-make verify   # Check the DB, skill coverage of every active job, the curated SQL slices, and docs/ assets
-make clean    # Remove generated .db and bundle artifacts
-make help     # List all Makefile targets
+make build    # Rebuild the DB from SQL + weekly deltas, enrich it, copy it into docs/, and verify
+make serve    # Build, then preview the site at http://127.0.0.1:8080
+make ci       # Everything CI runs: lint, type check, tests, CRAP, then the full build
+make help     # List every target
 ```
+
+**Data targets**
+
+| Target | What it does |
+|---|---|
+| `make db` | Rebuild `memphis_it_jobs_2026.db` from `memphis_it_jobs_2026.sql` + every `weekly_delta_*.sql` (oldest first), then enrich it. A failing script leaves the existing DB untouched. |
+| `make apply-delta DELTA=weekly_delta_YYYY_MM_DD.sql` | Apply one new delta to the existing DB (keeps `.db.backup`), then re-enrich. |
+| `make bundle` | Copy the DB into `docs/`, where the browser loads it with `sql.js`. |
+| `make verify` | Check DB integrity, that every active job has a skill, that the curated SQL slices return rows, and that `docs/` is current. |
+
+**Code-quality targets**
+
+| Target | What it does |
+|---|---|
+| `make lint` / `make format` | ruff lint + format check / auto-fix |
+| `make typecheck` | ty |
+| `make test` | pytest with branch coverage; fails below 90% |
+| `make crap` | Fails if any function's CRAP score (complexity × missing coverage) exceeds 30 |
+
+**Where things live**
+
+| Path | Contents |
+|---|---|
+| `memphis_it_jobs_2026.sql`, `weekly_delta_*.sql` | Research data from the deep-research agent (baseline + weekly patches) |
+| `taxonomy/*.toml` | Skills and their regex patterns, corridors, macro-sectors, and the curated SQL slices. Edit these to retune classification. |
+| `src/memployers/` | Build pipeline: `database` (build/apply deltas), `enrich` (taxonomy tables), `verify`, `cli` |
+| `tools/crap.py` | CRAP report used by `make crap` |
+| `docs/` | The static site (GitHub Pages) plus the copied DB |
 
 ---
 

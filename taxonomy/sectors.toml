@@ -1,0 +1,59 @@
+# Taxonomy data loaded by the memployers package (src/memployers/taxonomy.py). Edit by hand.
+# Macro-sectors. A company's `sector` text is lower-cased and checked against each sector's `keywords`
+# substrings in order; no match falls back to `default`.
+
+default = "consulting_telecom_services"
+
+[[sectors]]
+id = "hyperscale_ai_cloud"
+name = "Hyperscale AI, Space & Cloud Infra"
+color = "#10b981"
+keywords = ["hyperscale", "aerospace", "sovereign cloud", "vertical ai"]
+
+[[sectors]]
+id = "logistics_supply_chain"
+name = "Global Logistics, Supply Chain & 3PL"
+color = "#f59e0b"
+keywords = ["logistics", "3pl", "drayage", "supply chain", "heavy lift"]
+
+[[sectors]]
+id = "healthcare_biomed"
+name = "Healthcare Systems & Biomedical Research"
+color = "#ec4899"
+keywords = ["healthcare", "biomedical", "fundraising", "academic health", "pharmaceutical", "specialty pharmacy"]
+
+[[sectors]]
+id = "medtech_robotics_biotech"
+name = "MedTech, Surgical Robotics & Biotech"
+color = "#a855f7"
+keywords = ["medical devices", "medical technology", "biotech", "orthobiologics", "orthodontic"]
+
+[[sectors]]
+id = "retail_ecommerce_hospitality"
+name = "Retail, E-Commerce & Hospitality Tech"
+color = "#6366f1"
+keywords = ["retail", "hospitality", "omnichannel", "apparel", "footwear"]
+
+[[sectors]]
+id = "banking_fintech_insurance"
+name = "Banking, FinTech, Insurance & REIT"
+color = "#06b6d4"
+keywords = ["banking", "wealth management", "financial services", "insurance", "real estate", "credit union"]
+
+[[sectors]]
+id = "manufacturing_industrial_ag"
+name = "Manufacturing, EV, AgTech & Industrial"
+color = "#f97316"
+keywords = ["manufacturing", "packaging", "food", "agribusiness", "utility infrastructure", "insulation", "marine engine", "wood products", "paper", "copper", "specialty chemicals", "hvac", "electronics", "building automation", "industrial & software", "beverage"]
+
+[[sectors]]
+id = "civic_federal_defense_edu"
+name = "Civic, Federal, Defense, Utilities & Edu"
+color = "#3b82f6"
+keywords = ["government", "municipal", "federal", "defense", "education", "school", "university", "utility"]
+
+[[sectors]]
+id = "consulting_telecom_services"
+name = "IT Consulting, Telecom & Home/Field Services"
+color = "#14b8a6"
+keywords = ["consulting", "managed it", "staffing", "fiber", "home service", "pest control", "field services", "digital agency", "architecture, engineering"]
